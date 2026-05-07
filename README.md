@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Sweepstake Viewer
 
-# Run and deploy your AI Studio app
+Sweepstake Viewer is a static football tournament tracker for running a friends-and-family sweepstake. It lets you assign teams to players, enter match results, follow group tables, and watch the leaderboard update as teams progress through the tournament.
 
-This contains everything you need to run your app locally.
+The app currently supports World Cup 2026 as the main tournament view, along with Euro 2028 and several past tournaments for testing and comparison.
 
-View your app in AI Studio: https://ai.studio/apps/629ef573-83f8-409b-9a33-345b9b4fec18
+## Run locally
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+Prerequisite: Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Start the development server:
    `npm run dev`
+3. Open the local Vite URL shown in the terminal.
+
+No environment variables are required for local use.
+
+## How to use the app
+
+1. Go to `Setup` to add players, adjust scoring settings, and assign teams manually or at random.
+2. Use `Home` to view the live leaderboard and each player's assigned teams.
+3. Enter group-stage results in `Groups` to update standings and qualification.
+4. Move to `Knockouts` to enter bracket results once teams progress beyond the groups.
+5. Optionally enable the built-in simulation controls in Settings for testing scenarios.
+
+App state is stored in the browser, so players, scores, and tournament settings persist locally between visits on the same device.

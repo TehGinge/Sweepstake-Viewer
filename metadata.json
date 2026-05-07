@@ -1,6 +1,6 @@
 {
-  "name": "World Cup 2026 Sweepstake",
-  "description": "A static sweepstake web app for the 2026 FIFA World Cup, designed for friends.",
+  "name": "Sweepstake Viewer",
+  "description": "A static football tournament sweepstake tracker for assigning teams, entering results, and following the leaderboard.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
