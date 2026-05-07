@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { getGroupStandings } from '../utils/scoring';
-import { getPlayerTheme } from '../utils/theme';
+import { CONTROLS, SURFACES, TEXT, getPlayerTheme, getResultBadgeClass } from '../utils/theme';
 
 export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?: () => void }> = ({ initialGroup, onGroupHandled }) => {
   const { matches, setMatches, updateMatch, players, teams, groups, tournamentId, settings } = useAppContext();
@@ -37,7 +37,7 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
       {/* Group Selector & Left Nav */}
       <div className="w-full lg:w-48 shrink-0">
-        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-2">Select Group</h3>
+        <h3 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-4 px-2">Select Group</h3>
         <div className="flex overflow-x-auto hide-scrollbar lg:flex-col gap-2 pb-2">
           {groups.map(g => (
             <button
@@ -45,8 +45,8 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
               onClick={() => setActiveGroup(g)}
               className={`px-4 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors flex-1 lg:flex-none text-left shadow-sm
                 ${activeGroup === g 
-                  ? 'bg-slate-800 dark:bg-slate-700 text-white' 
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'}`}
+                  ? 'bg-slate-900 dark:bg-slate-700 text-white' 
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700'}`}
             >
                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border mr-1.5 bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Grp {g}</span>
             </button>
@@ -56,10 +56,10 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
 
       <div className="flex-1 space-y-6">
         {/* Standings Table */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center gap-3 flex-wrap">
+        <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden`}>
+          <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Group {activeGroup} Standings</h2>
+              <h2 className={`text-xl font-black ${TEXT.primary}`}>Group {activeGroup} Standings</h2>
               <span className={`inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Group {activeGroup}</span>
             </div>
             {settings.allowSimulate && (
@@ -73,7 +73,7 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
           </div>
           <div className="overflow-x-auto hide-scrollbar px-6 pb-6 pt-4">
             <table className="w-full text-left mt-2 text-sm">
-              <thead className="text-xs uppercase text-slate-400 dark:text-slate-500 font-bold border-b border-slate-100 dark:border-slate-700">
+              <thead className="text-xs uppercase text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                 <tr className="h-10">
                   <th className="w-8">#</th>
                   <th>Team</th>
@@ -96,7 +96,7 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                   
                   return (
                   <tr key={team.id} className={`h-12 border-b border-slate-50 dark:border-slate-700/50 last:border-none ${idx < 2 ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : ''}`}>
-                    <td className="font-bold text-slate-500 dark:text-slate-400">{idx + 1}</td>
+                    <td className="font-bold text-slate-600 dark:text-slate-400">{idx + 1}</td>
                     <td className="font-bold">
                       <div className="flex items-center gap-2 h-12">
                         <img src={`https://flagcdn.com/w40/${team.iso2}.png`} alt={team.name} className="w-6 h-4 object-cover rounded shrink-0 shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" title={team.name} />
@@ -106,7 +106,7 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                     </td>
                     <td className="hidden lg:table-cell">
                       {assigneeIndex === -1 ? (
-                        <span className="text-slate-400 dark:text-slate-500 italic text-xs">Unassigned</span>
+                        <span className="text-slate-500 dark:text-slate-400 italic text-xs">Unassigned</span>
                       ) : (
                         <span className={`inline-flex items-center gap-1.5 px-2 py-1 ${theme.lightBg} ${theme.text} ${theme.border} border rounded text-xs font-bold`}>
                           <div className={`w-3 h-3 rounded-sm flex items-center justify-center text-[7px] leading-none ${theme.bg} ${theme.textContrast}`}>
@@ -116,12 +116,12 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                         </span>
                       )}
                     </td>
-                    <td className="text-center text-slate-600 dark:text-slate-400">{team.played}</td>
-                    <td className="text-center text-slate-600 dark:text-slate-400">{team.won}</td>
-                    <td className="text-center text-slate-600 dark:text-slate-400">{team.draw}</td>
-                    <td className="text-center text-slate-600 dark:text-slate-400">{team.lost}</td>
-                    <td className="text-center text-slate-500 dark:text-slate-400 hidden sm:table-cell">{team.gf}</td>
-                    <td className="text-center text-slate-500 dark:text-slate-400 hidden sm:table-cell">{team.ga}</td>
+                    <td className="text-center text-slate-700 dark:text-slate-300">{team.played}</td>
+                    <td className="text-center text-slate-700 dark:text-slate-300">{team.won}</td>
+                    <td className="text-center text-slate-700 dark:text-slate-300">{team.draw}</td>
+                    <td className="text-center text-slate-700 dark:text-slate-300">{team.lost}</td>
+                    <td className="text-center text-slate-600 dark:text-slate-400 hidden sm:table-cell">{team.gf}</td>
+                    <td className="text-center text-slate-600 dark:text-slate-400 hidden sm:table-cell">{team.ga}</td>
                     <td className="text-center font-bold text-slate-700 dark:text-slate-300">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
                     <td className="text-right font-black text-slate-900 dark:text-white text-base">{team.points}</td>
                   </tr>
@@ -132,9 +132,9 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
         </div>
 
         {/* Group Matches */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-           <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">Matches</h2>
+          <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden`}>
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
+            <h2 className={`text-xl font-black ${TEXT.primary}`}>Matches</h2>
             <span className={`inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Group {activeGroup}</span>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -159,11 +159,11 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
               return (
                 <div key={match.id} className="p-6 flex flex-col items-center justify-between gap-4 dark:bg-slate-800 border-b last:border-b-0 border-slate-100 dark:border-slate-700/50">
                   <div className="flex flex-col items-center gap-1 w-full relative">
-                    <div className="absolute left-0 top-0 text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded tracking-widest hidden sm:block">
+                    <div className="absolute left-0 top-0 text-[10px] uppercase font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded tracking-widest hidden sm:block">
                        Match {match.id.replace(tournamentId + '-G-' + activeGroup + '-', '').replace('M', '')}
                     </div>
                     {(bstDate || match.location) && (
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center mt-1 sm:mt-0">
+                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400 uppercase tracking-widest text-center mt-1 sm:mt-0">
                         <span className="sm:hidden block text-center font-black mb-1">MATCH {match.id.replace(tournamentId + '-G-' + activeGroup + '-', '').replace('M', '')}</span>
                         {bstDate} {bstDate && match.location ? ' • ' : ''} {match.location}
                       </div>
@@ -196,9 +196,9 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-center gap-2.5 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm w-full sm:w-auto mt-2 sm:mt-0">
+                    <div className={`flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg shadow-sm w-full sm:w-auto mt-2 sm:mt-0 ${SURFACES.inset}`}>
                       {match.homeScore !== null && match.awayScore !== null && (
-                        <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${match.homeScore > match.awayScore ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : match.homeScore === match.awayScore ? 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
+                        <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${getResultBadgeClass(match.homeScore > match.awayScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L')}`}>
                           {match.homeScore > match.awayScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L'}
                         </span>
                       )}
@@ -207,18 +207,18 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                         min="0"
                         value={match.homeScore ?? ''} 
                         onChange={(e) => updateMatch(match.id, e.target.value === '' ? null : parseInt(e.target.value), match.awayScore)}
-                        className="w-12 h-10 text-center font-black text-lg bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 rounded focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input}`}
                       />
-                      <span className="text-slate-400 dark:text-slate-500 font-bold px-1 text-sm">VS</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-bold px-1 text-sm">VS</span>
                       <input 
                         type="number" 
                         min="0"
                         value={match.awayScore ?? ''} 
                         onChange={(e) => updateMatch(match.id, match.homeScore, e.target.value === '' ? null : parseInt(e.target.value))}
-                        className="w-12 h-10 text-center font-black text-lg bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 rounded focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input}`}
                       />
                       {match.homeScore !== null && match.awayScore !== null && (
-                        <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${match.awayScore > match.homeScore ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : match.homeScore === match.awayScore ? 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
+                        <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${getResultBadgeClass(match.awayScore > match.homeScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L')}`}>
                           {match.awayScore > match.homeScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L'}
                         </span>
                       )}

@@ -3,51 +3,35 @@ import { Player, Match, ScoreConfig, Team, TournamentId } from '../types';
 import { generateInitialMatches } from '../data/matches';
 import { TEAMS as WC26_TEAMS, GROUPS as WC26_GROUPS } from '../data/teams';
 import { EURO28_TEAMS, EURO28_GROUPS, generateEuro28Matches } from '../data/euro28';
-import {
-  generatePastMatches,
-  WC22_TEAMS, WC22_GROUPS, WC22_PLAYERS,
-  EURO20_TEAMS, EURO20_GROUPS, EURO20_PLAYERS,
-  WC18_TEAMS, WC18_GROUPS, WC18_PLAYERS
-} from '../data/past';
 
-const getTeams = (id: string) => {
+const isValidTournamentId = (id: string): id is TournamentId => {
+  return id === 'WC26' || id === 'EURO28';
+};
+
+const getTeams = (id: TournamentId) => {
     switch (id) {
       case 'WC26': return WC26_TEAMS;
       case 'EURO28': return EURO28_TEAMS;
-      case 'WC22': return WC22_TEAMS;
-      case 'EURO20': return EURO20_TEAMS;
-      case 'WC18': return WC18_TEAMS;
       default: return WC26_TEAMS;
     }
   };
 
-const getGroups = (id: string) => {
+const getGroups = (id: TournamentId) => {
   switch (id) {
     case 'WC26': return WC26_GROUPS;
     case 'EURO28': return EURO28_GROUPS;
-    case 'WC22': return WC22_GROUPS;
-    case 'EURO20': return EURO20_GROUPS;
-    case 'WC18': return WC18_GROUPS;
     default: return WC26_GROUPS;
   }
 };
 
-const getDefaultPlayers = (id: string) => {
-  switch (id) {
-    case 'WC22': return WC22_PLAYERS;
-    case 'EURO20': return EURO20_PLAYERS;
-    case 'WC18': return WC18_PLAYERS;
-    default: return INITIAL_PLAYERS.map(p => ({ ...p, teamIds: [] }));
-  }
+const getDefaultPlayers = () => {
+  return INITIAL_PLAYERS.map(p => ({ ...p, teamIds: [] }));
 };
 
-const getDefaultMatches = (id: string) => {
+const getDefaultMatches = (id: TournamentId) => {
   switch (id) {
     case 'WC26': return generateInitialMatches();
     case 'EURO28': return generateEuro28Matches();
-    case 'WC22': return generatePastMatches('WC22');
-    case 'EURO20': return generatePastMatches('EURO20');
-    case 'WC18': return generatePastMatches('WC18');
     default: return generateInitialMatches();
   }
 };
@@ -115,12 +99,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const savedTourneyId = parsed.tournamentId || 'WC26';
-        if (parsed.tournamentId) {
+        const savedTourneyId = isValidTournamentId(parsed.tournamentId) ? parsed.tournamentId : 'WC26';
+        if (isValidTournamentId(parsed.tournamentId)) {
           setTournamentIdState(savedTourneyId);
         }
         
-        let loadedPlayers = parsed.players || getDefaultPlayers(savedTourneyId);
+        let loadedPlayers = parsed.players || getDefaultPlayers();
         
         const activeTeams = getTeams(savedTourneyId);
         
@@ -212,7 +196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTournamentIdState(id);
     const newMatches = getDefaultMatches(id);
     setMatches(newMatches);
-    setPlayersState(getDefaultPlayers(id));
+    setPlayersState(getDefaultPlayers());
   };
 
   const setPlayers = (newPlayers: Player[]) => setPlayersState(newPlayers);

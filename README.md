@@ -2,7 +2,7 @@
 
 Sweepstake Viewer is a static football tournament tracker for running a friends-and-family sweepstake. It lets you assign teams to players, enter match results, follow group tables, and watch the leaderboard update as teams progress through the tournament.
 
-The app currently supports World Cup 2026 as the main tournament view, along with Euro 2028 and several past tournaments for testing and comparison.
+The app currently supports World Cup 2026 as the main tournament view, along with Euro 2028 for testing and comparison.
 
 ## Run locally
 

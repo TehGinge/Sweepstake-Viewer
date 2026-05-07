@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { generateLeaderboard, calculateTeamPoints, getGroupStandings } from '../utils/scoring';
-import { getPlayerTheme, getFifaRankingColor, getStandingColor } from '../utils/theme';
+import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 
 type SortConfig = { key: 'name' | 'group' | 'fifaRanking' | 'assignee' | 'points' | 'stage' | 'played'; direction: 'asc' | 'desc' };
 
@@ -143,8 +143,8 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-6xl mb-4">🏆</div>
-        <h2 className="text-2xl font-bold text-slate-700">No players yet</h2>
-        <p className="text-slate-500 mt-2">Go to the Setup tab to add players and assign teams.</p>
+        <h2 className={`text-2xl font-bold ${TEXT.secondary}`}>No players yet</h2>
+        <p className={`${TEXT.muted} mt-2`}>Go to the Setup tab to add players and assign teams.</p>
       </div>
     );
   }
@@ -160,16 +160,16 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
       {/* Main Content Area */}
       <div className="flex-1 space-y-6 min-w-0">
         <div className="flex justify-end items-center gap-4">
-           <div className="flex bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 rounded-lg shrink-0 shadow-sm">
+           <div className={`flex p-1 rounded-lg shrink-0 shadow-sm ${CONTROLS.segmented}`}>
              <button 
                onClick={() => setViewMode('PLAYERS')}
-               className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${viewMode === 'PLAYERS' ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+               className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${viewMode === 'PLAYERS' ? CONTROLS.segmentedActive : CONTROLS.segmentedIdle}`}
              >
                Players View
              </button>
              <button 
                onClick={() => setViewMode('TEAMS')}
-               className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${viewMode === 'TEAMS' ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+               className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${viewMode === 'TEAMS' ? CONTROLS.segmentedActive : CONTROLS.segmentedIdle}`}
              >
                Teams View
              </button>
@@ -183,7 +183,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
             const theme = getPlayerTheme(playerIndex);
             const isWinner = index === 0 && entry.points > 0;
             return (
-            <div key={entry.playerId} className={`bg-white dark:bg-slate-800 border text-left rounded-xl flex flex-col overflow-hidden shadow-sm ${isWinner ? 'ring-2 ring-emerald-400 border-emerald-400 dark:ring-emerald-500 dark:border-emerald-500' : 'border-slate-200 dark:border-slate-700'}`}>
+            <div key={entry.playerId} className={`${SURFACES.cardElevated} text-left rounded-xl flex flex-col overflow-hidden shadow-sm transition-colors ${isWinner ? 'ring-2 ring-emerald-400 border-emerald-400 dark:ring-emerald-500 dark:border-emerald-500' : ''}`}>
               <div className={`p-3 border-b flex items-center justify-between ${theme.lightBg} ${theme.border}`}>
                 <div className="flex items-center gap-2">
                    <div className={`w-7 h-7 rounded flex items-center justify-center font-bold text-xs shrink-0 shadow-sm ${theme.bg} ${theme.textContrast}`}>
@@ -199,7 +199,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                 </div>
               </div>
 
-              <div className="flex-1 p-3 grid gap-1.5 dark:bg-slate-800">
+              <div className="flex-1 p-3 grid gap-1.5 bg-slate-50/70 dark:bg-slate-900">
                 {[...entry.teams].sort((a, b) => a.fifaRanking - b.fifaRanking).map(team => {
                    const pts = calculateTeamPoints(team.id, matches, config);
                    const hasPlayed = matches.some(m => (m.homeTeamId === team.id || m.awayTeamId === team.id) && m.status === 'FINISHED');
@@ -222,7 +222,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                    }
 
                    return (
-                     <div key={team.id} className={`flex items-center justify-between p-2 bg-white dark:bg-slate-900/50 border rounded-lg transition-colors ${cardBorderClass}`}>
+                     <div key={team.id} className={`flex items-center justify-between p-2 border rounded-lg transition-colors bg-white dark:bg-slate-950 ${cardBorderClass}`}>
                        <div className="flex items-center gap-2 flex-1 min-w-0">
                          <img src={`https://flagcdn.com/w40/${team.iso2}.png`} alt={team.name} className="w-6 h-4 object-cover rounded shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)] shrink-0" title={team.name} />
                          <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
@@ -230,14 +230,14 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                            <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">Grp {team.group}{progression && progression !== 'Winner' ? ` • ${progression}` : ''}{progression === 'Winner' ? ' • Winner' : ''}</span>
                          </div>
                        </div>
-                       <div className={`px-2 py-1 flex-col justify-center items-center rounded text-center shrink-0 min-w-[2.5rem] ml-2 ${theme.lightBg} border ${theme.border} flex`}>
+                       <div className={`px-2 py-1 flex-col justify-center items-center rounded text-center shrink-0 min-w-[2.5rem] ml-2 border flex ${theme.lightBg} ${theme.border}`}>
                          <span className={`font-black text-sm leading-none text-slate-900 dark:text-white`}>{hasPlayed ? pts : '-'}</span>
                        </div>
                      </div>
                    );
                 })}
                 {entry.teams.length === 0 && (
-                  <div className="text-xs text-slate-400 dark:text-slate-500 italic text-center py-3">No teams.</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-500 italic text-center py-3">No teams.</div>
                 )}
               </div>
             </div>
@@ -245,49 +245,49 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
           })}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden`}>
           <div className="overflow-x-auto hide-scrollbar">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+              <thead className={SURFACES.tableHead}>
                 <tr>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('name')}
                   >
                     Team <SortIcon columnKey="name" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('group')}
                   >
                     Group <SortIcon columnKey="group" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('fifaRanking')}
                   >
                     FIFA Rank <SortIcon columnKey="fifaRanking" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('stage')}
                   >
                     Stage <SortIcon columnKey="stage" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('assignee')}
                   >
                     Assignee <SortIcon columnKey="assignee" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('played')}
                   >
                     Played <SortIcon columnKey="played" />
                   </th>
                   <th 
-                    className="p-4 font-bold text-slate-600 dark:text-slate-400 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
+                    className="p-4 font-bold text-slate-700 dark:text-slate-300 text-right cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group select-none whitespace-nowrap transition-colors"
                     onClick={() => handleSort('points')}
                   >
                     Points <SortIcon columnKey="points" />
@@ -298,31 +298,31 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                 {sortedTeams.map((team) => {
                   const theme = getPlayerTheme(team.assigneeIndex);
                   return (
-                  <tr key={team.id} className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${eliminatedMap.get(team.id) ? 'opacity-40 grayscale' : ''}`}>
+                  <tr key={team.id} className={`hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors ${eliminatedMap.get(team.id) ? 'opacity-40 grayscale' : ''}`}>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img src={`https://flagcdn.com/w40/${team.iso2}.png`} alt={team.name} className="w-6 h-4 object-cover rounded shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" title={team.name} />
                         <span className={`font-bold ${theme.text}`}>{team.name}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold ml-1">{team.id}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold ml-1">{team.id}</span>
                       </div>
                     </td>
-                    <td className="p-4 font-bold text-slate-600 dark:text-slate-400">
+                    <td className="p-4 font-bold text-slate-700 dark:text-slate-300">
                       <span className="text-slate-700 dark:text-slate-300">Grp {team.group}</span>
                       {groupStandingsMap.get(team.id) && (
-                         <span className="text-slate-500 font-medium ml-1.5" title="Group Position">
+                         <span className="text-slate-600 dark:text-slate-400 font-medium ml-1.5" title="Group Position">
                            • {groupStandingsMap.get(team.id)}{[1].includes(groupStandingsMap.get(team.id)!) ? 'st' : [2].includes(groupStandingsMap.get(team.id)!) ? 'nd' : [3].includes(groupStandingsMap.get(team.id)!) ? 'rd' : 'th'}
                          </span>
                       )}
                     </td>
-                    <td className={`p-4 font-medium text-slate-600 dark:text-slate-400`}>
+                    <td className={`p-4 font-medium text-slate-700 dark:text-slate-300`}>
                       {team.fifaRanking}
                     </td>
-                    <td className="p-4 font-medium text-slate-600 dark:text-slate-400">
+                    <td className="p-4 font-medium text-slate-700 dark:text-slate-300">
                       {team.stage}
                     </td>
                     <td className="p-4">
                       {team.assigneeName === 'Unassigned' ? (
-                        <span className="text-slate-400 italic text-xs">Unassigned</span>
+                        <span className="text-slate-500 dark:text-slate-400 italic text-xs">Unassigned</span>
                       ) : (
                         <span className={`inline-flex items-center gap-1.5 px-2 py-1 ${theme.lightBg} ${theme.text} ${theme.border} border rounded text-xs font-bold`}>
                           <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] leading-none ${theme.bg} ${theme.textContrast}`}>
@@ -333,7 +333,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                       )}
                     </td>
                     <td className="p-4 text-center">
-                      <span className="text-slate-500 font-bold text-sm">{team.played}</span>
+                      <span className="text-slate-600 dark:text-slate-400 font-bold text-sm">{team.played}</span>
                     </td>
                     <td className="p-4 text-right">
                       <span className="font-black text-slate-900 dark:text-white text-base">
@@ -351,11 +351,11 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
 
       {/* Upcoming Matches Sidebar */}
       <div className="w-full xl:w-96 flex-shrink-0 space-y-4">
-        <h3 className="font-black text-slate-800 dark:text-slate-200 text-lg px-1 flex items-center gap-2">
+        <h3 className="font-black text-slate-800 dark:text-slate-100 text-lg px-1 flex items-center gap-2">
           📅 Upcoming Matches
         </h3>
         {upcomingMatches.length === 0 ? (
-          <p className="text-slate-500 text-sm italic px-1">No upcoming matches.</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm italic px-1">No upcoming matches.</p>
         ) : (
           <div className="space-y-3">
              {upcomingMatches.map(match => {
@@ -372,11 +372,11 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                          setActiveTab('MATCHES');
                        }
                     }}
-                    className="w-full text-left bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all cursor-pointer"
+                    className="w-full text-left bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all cursor-pointer"
                   >
-                    <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-3 flex justify-between items-center bg-slate-50 dark:bg-slate-900 px-2 py-1.5 rounded-md">
+                    <div className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-300 mb-3 flex justify-between items-center bg-slate-100 dark:bg-slate-900 px-2 py-1.5 rounded-md border border-slate-200 dark:border-slate-700">
                       <span className="truncate pr-2">{match.stage === 'GROUP' ? `Group ${match.group}` : match.stage}</span>
-                      <span className="shrink-0 text-emerald-600 dark:text-emerald-400">
+                      <span className="shrink-0 text-emerald-700 dark:text-emerald-400">
                         {match.date ? new Date(match.date).toLocaleString('en-GB', { timeZone: 'Europe/London', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' BST' : 'TBD'}
                       </span>
                     </div>
@@ -406,7 +406,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                                </div>
                              </>
                           ) : (
-                             <span className="font-bold text-slate-400 text-base italic">{match.placeholderHome || 'TBD'}</span>
+                             <span className="font-bold text-slate-500 dark:text-slate-400 text-base italic">{match.placeholderHome || 'TBD'}</span>
                           )}
                         </div>
                       </div>
@@ -435,13 +435,13 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                                </div>
                              </>
                           ) : (
-                             <span className="font-bold text-slate-400 text-base italic">{match.placeholderAway || 'TBD'}</span>
+                             <span className="font-bold text-slate-500 dark:text-slate-400 text-base italic">{match.placeholderAway || 'TBD'}</span>
                           )}
                         </div>
                       </div>
                     </div>
                     {match.location && (
-                      <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-700/50 text-[11px] font-medium text-slate-400 dark:text-slate-500 flex items-center justify-end" title={match.location}>
+                      <div className="mt-3.5 pt-3 border-t border-slate-200 dark:border-slate-700/50 text-[11px] font-medium text-slate-600 dark:text-slate-400 flex items-center justify-end" title={match.location}>
                         <span className="truncate">📍 {match.location}</span>
                       </div>
                     )}

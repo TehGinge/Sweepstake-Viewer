@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Trash2, Plus, Shuffle, RotateCcw, X, Copy, Save, Download } from 'lucide-react';
-import { getPlayerTheme } from '../utils/theme';
+import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 
 export const SetupTab: React.FC = () => {
   const { players, setPlayers, assignTeamsRandomly, clearAllAssignments, resetTournament, teams, settings } = useAppContext();
@@ -131,23 +131,23 @@ export const SetupTab: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 min-w-0 w-full overflow-hidden">
-      <div className="bg-white dark:bg-slate-800 p-6 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm min-w-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-100 dark:border-slate-700 pb-6">
+      <div className={`${SURFACES.cardElevated} p-6 rounded-xl shadow-sm min-w-0`}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-200 dark:border-slate-700 pb-6">
             <div>
-                <h2 className="text-xl font-black dark:text-white">Players ({players.length})</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Add players and assign the {teams.length} teams.</p>
+                <h2 className={`text-xl font-black ${TEXT.primary}`}>Players ({players.length})</h2>
+                <p className={`text-sm mt-1 ${TEXT.muted}`}>Add players and assign the {teams.length} teams.</p>
             </div>
             
             <div className="flex flex-wrap gap-2">
                 <button
                 onClick={addPlayer}
-                className="flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                className="flex items-center px-4 py-2 bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded font-bold text-sm hover:bg-slate-300 dark:hover:bg-slate-800 transition-colors shadow-sm"
                 >
                 <Plus size={16} className="mr-1.5" /> Add Player
                 </button>
                 <button
                 onClick={() => setIsManualMode(!isManualMode)}
-                className={`flex items-center px-4 py-2 rounded font-bold text-sm transition-colors shadow-sm border ${isManualMode ? 'bg-slate-800 dark:bg-slate-700 text-white border-slate-800 dark:border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                className={`flex items-center px-4 py-2 rounded font-bold text-sm transition-colors shadow-sm border ${isManualMode ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                   Manual Assign
                 </button>
@@ -191,9 +191,9 @@ export const SetupTab: React.FC = () => {
                   player.teamIds.map(tid => {
                     const t = teams.find(x => x.id === tid);
                     return t ? (
-                      <span key={tid} className={`inline-flex items-center px-2 py-1 bg-white dark:bg-slate-900/50 border text-xs font-bold rounded shadow-sm ${theme.border} ${theme.text}`} title={t.name}>
+                      <span key={tid} className={`inline-flex items-center px-2 py-1 bg-white dark:bg-slate-950 border text-xs font-bold rounded shadow-sm ${theme.border} ${theme.text}`} title={t.name}>
                         <img src={`https://flagcdn.com/w40/${t.iso2}.png`} alt={t.name} className="w-4 h-3 object-cover rounded-sm inline-block mr-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" />
-                        {t.id} <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold border ml-1 bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Grp {t.group}</span>
+                        {t.id} <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold border ml-1 bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700`}>Grp {t.group}</span>
                         {isManualMode && (
                           <button onClick={() => removeTeamFromPlayer(player.id, tid)} className="ml-1.5 opacity-50 hover:opacity-100 transition-opacity">
                             <X size={12} />
@@ -209,7 +209,7 @@ export const SetupTab: React.FC = () => {
                  <div className="mt-3">
                    <select 
                      onChange={(e) => { addTeamToPlayer(player.id, e.target.value); e.target.value = ""; }}
-                     className="w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded text-slate-600 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
+                     className={`w-full text-xs p-1.5 rounded ${CONTROLS.input}`}
                      defaultValue=""
                    >
                      <option value="" disabled>+ Add team...</option>
@@ -228,12 +228,12 @@ export const SetupTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-sm">
+      <div className="bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-900 dark:to-slate-950 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Save size={20} className="text-slate-600 dark:text-slate-400" />
-          <h3 className="text-lg font-black text-slate-800 dark:text-white">Save / Load Team Assignments</h3>
+          <Save size={20} className="text-emerald-600 dark:text-emerald-400" />
+          <h3 className={`text-lg font-black ${TEXT.primary}`}>Save / Load Team Assignments</h3>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className={`text-sm ${TEXT.muted} mb-6`}>
           Save your current player names and team assignments to your browser's local storage so you can recall them later. This does NOT save match scores.
         </p>
 
@@ -244,7 +244,7 @@ export const SetupTab: React.FC = () => {
               placeholder="Save slot name..." 
               value={saveSlotName}
               onChange={(e) => setSaveSlotName(e.target.value)}
-              className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 font-bold dark:text-white"
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-bold ${CONTROLS.input}`}
             />
             <button 
               onClick={saveState}
@@ -260,10 +260,10 @@ export const SetupTab: React.FC = () => {
             {Object.entries(savedStates).map(([name, data]) => {
               const savedPlayers = data as any[];
               return (
-              <div key={name} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex flex-col shadow-sm">
-                <div className="font-bold text-slate-800 dark:text-slate-200 mb-1 truncate" title={name}>{name}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mb-4">{(savedPlayers || []).length} players • {(savedPlayers || []).reduce((acc: number, p: any) => acc + (p.teamIds?.length || 0), 0)} teams</div>
-                <div className="flex justify-between items-center mt-auto pt-2 border-t border-slate-100 dark:border-slate-700">
+              <div key={name} className="bg-white/80 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-lg p-4 flex flex-col shadow-sm">
+                <div className="font-bold text-slate-900 dark:text-slate-200 mb-1 truncate" title={name}>{name}</div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 mb-4">{(savedPlayers || []).length} players • {(savedPlayers || []).reduce((acc: number, p: any) => acc + (p.teamIds?.length || 0), 0)} teams</div>
+                <div className="flex justify-between items-center mt-auto pt-2 border-t border-emerald-200 dark:border-slate-800">
                   <button 
                     onClick={() => loadState(name)}
                     className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-bold flex items-center"
@@ -282,15 +282,15 @@ export const SetupTab: React.FC = () => {
             )})}
           </div>
         ) : (
-          <div className="text-center py-6 bg-white/50 dark:bg-slate-900/30 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-400">
+          <div className="text-center py-6 bg-white/80 dark:bg-slate-950/80 rounded-lg border border-dashed border-emerald-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
             No saved assignments yet.
           </div>
         )}
       </div>
       
-      <div className="bg-red-50 dark:bg-red-900/10 p-6 border border-red-100 dark:border-red-900/30 rounded-xl shadow-sm">
+      <div className="bg-red-100/70 dark:bg-red-900/15 p-6 border border-red-200 dark:border-red-900/40 rounded-xl shadow-sm">
           <h3 className="text-sm font-black text-red-800 dark:text-red-400 uppercase tracking-widest mb-2">Danger Zone</h3>
-          <p className="text-sm text-red-600 dark:text-red-500 mb-4">Resetting the tournament will clear all match results (group and knockouts) but will keep your players and their assignments.</p>
+          <p className="text-sm text-red-700 dark:text-red-400 mb-4">Resetting the tournament will clear all match results (group and knockouts) but will keep your players and their assignments.</p>
           <div className="flex flex-wrap gap-4">
             <button 
               onClick={handleReset}
@@ -317,15 +317,15 @@ export const SetupTab: React.FC = () => {
 
       {showSpinModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Spin The Wheel</h2>
+          <div className={`${SURFACES.card} rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]`}>
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className={`text-xl font-black ${TEXT.primary}`}>Spin The Wheel</h2>
               <button onClick={() => setShowSpinModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
                 <X size={24} />
               </button>
             </div>
             <div className="p-6 flex-1 overflow-y-auto">
-              <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
+              <p className={`${TEXT.muted} mb-6 text-sm`}>
                 Copy the lists below and paste them into any "Spin The Wheel" website. We've split this into distinct draws to ensure fairness.
               </p>
               
@@ -340,7 +340,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 1 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot1TeamsText}
                         readOnly
                       />
@@ -356,7 +356,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot1PlayersText}
                         readOnly
                       />
@@ -380,7 +380,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 2 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot2TeamsText}
                         readOnly
                       />
@@ -396,7 +396,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot2PlayersText}
                         readOnly
                       />
@@ -420,7 +420,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 3 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot3TeamsText}
                         readOnly
                       />
@@ -436,7 +436,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot3PlayersText}
                         readOnly
                       />

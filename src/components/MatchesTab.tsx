@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { MatchStage, Match } from '../types';
+import { CONTROLS, SURFACES, TEXT, getResultBadgeClass } from '../utils/theme';
 
 const STAGES: { stage: MatchStage; title: string }[] = [
   { stage: 'R32', title: 'Round of 32' },
@@ -43,7 +44,7 @@ export const MatchesTab: React.FC = () => {
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
       {/* Stage Selector */}
       <div className="w-full lg:w-56 shrink-0">
-        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-2">Tournament Stage</h3>
+        <h3 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-4 px-2">Tournament Stage</h3>
         <div className="flex overflow-x-auto hide-scrollbar lg:flex-col gap-2 pb-2">
           {STAGES.map(s => {
             if (s.stage === 'R32' && tournamentId !== 'WC26') return null;
@@ -53,8 +54,8 @@ export const MatchesTab: React.FC = () => {
               onClick={() => setActiveStage(s.stage)}
               className={`px-4 py-3 rounded-lg text-sm font-bold whitespace-nowrap transition-colors flex-1 lg:flex-none text-left shadow-sm
                 ${activeStage === s.stage 
-                  ? 'bg-slate-800 dark:bg-slate-700 text-white' 
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'}`}
+                  ? 'bg-slate-900 dark:bg-slate-700 text-white' 
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700'}`}
             >
               {s.title}
             </button>
@@ -64,9 +65,9 @@ export const MatchesTab: React.FC = () => {
       </div>
 
       <div className="flex-1">
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center flex-wrap gap-4">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">{STAGES.find(s => s.stage === activeStage)?.title}</h2>
+        <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden flex flex-col`}>
+          <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center flex-wrap gap-4">
+            <h2 className={`text-xl font-black ${TEXT.primary}`}>{STAGES.find(s => s.stage === activeStage)?.title}</h2>
             {settings.allowSimulate && (
               <button
                  onClick={simulateStageMatches}
@@ -85,11 +86,11 @@ export const MatchesTab: React.FC = () => {
               return (
               <div key={match.id} className="py-6 first:pt-4 last:pb-6 dark:bg-slate-800">
                 <div className="flex flex-col items-center mb-3">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest text-center">
+                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center">
                     Match {match.id.replace('M', '')} {match.group ? `• Grp ${match.group}` : ''}
                   </div>
                   {(bstDate || match.location) && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                    <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 text-center">
                       {bstDate} {bstDate && match.location ? ' • ' : ''} {match.location}
                     </div>
                   )}
@@ -104,7 +105,7 @@ export const MatchesTab: React.FC = () => {
                     <select
                       value={match.homeTeamId || ''}
                       onChange={(e) => updateMatch(match.id, match.homeScore, match.awayScore, e.target.value || null, match.awayTeamId)}
-                      className="w-full md:w-56 p-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      className={`w-full md:w-56 p-2.5 rounded-lg text-sm font-bold ${CONTROLS.input}`}
                     >
                       <option value="">{match.placeholderHome ? `----- ${match.placeholderHome} -----` : '-- Select Team --'}</option>
                       {teams.map(t => {
@@ -116,9 +117,9 @@ export const MatchesTab: React.FC = () => {
                   </div>
 
                   {/* Score Inputs */}
-                  <div className="flex items-center justify-center gap-2.5 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 w-full md:w-auto shadow-sm">
+                  <div className={`flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg w-full md:w-auto shadow-sm ${SURFACES.inset}`}>
                     {match.homeScore !== null && match.awayScore !== null && (
-                      <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${match.homeScore > match.awayScore ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : match.homeScore === match.awayScore ? 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
+                      <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${getResultBadgeClass(match.homeScore > match.awayScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L')}`}>
                         {match.homeScore > match.awayScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L'}
                       </span>
                     )}
@@ -128,19 +129,19 @@ export const MatchesTab: React.FC = () => {
                       value={match.homeScore ?? ''} 
                       onChange={(e) => updateMatch(match.id, e.target.value === '' ? null : parseInt(e.target.value), match.awayScore)}
                       disabled={!match.homeTeamId || !match.awayTeamId}
-                      className="w-12 h-10 text-center font-black text-lg bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 rounded focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-slate-100 disabled:dark:bg-slate-900 disabled:text-slate-400 disabled:dark:text-slate-600"
+                      className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                     />
-                    <span className="text-slate-400 dark:text-slate-500 font-bold px-1 text-sm">VS</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold px-1 text-sm">VS</span>
                     <input 
                       type="number" 
                       min="0"
                       value={match.awayScore ?? ''} 
                       onChange={(e) => updateMatch(match.id, match.homeScore, e.target.value === '' ? null : parseInt(e.target.value))}
                       disabled={!match.homeTeamId || !match.awayTeamId}
-                      className="w-12 h-10 text-center font-black text-lg bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 rounded focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-slate-100 disabled:dark:bg-slate-900 disabled:text-slate-400 disabled:dark:text-slate-600"
+                      className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                     />
                     {match.homeScore !== null && match.awayScore !== null && (
-                      <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${match.awayScore > match.homeScore ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : match.homeScore === match.awayScore ? 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'}`}>
+                      <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${getResultBadgeClass(match.awayScore > match.homeScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L')}`}>
                         {match.awayScore > match.homeScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L'}
                       </span>
                     )}
@@ -151,7 +152,7 @@ export const MatchesTab: React.FC = () => {
                     <select
                       value={match.awayTeamId || ''}
                       onChange={(e) => updateMatch(match.id, match.homeScore, match.awayScore, match.homeTeamId, e.target.value || null)}
-                      className="w-full md:w-56 p-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      className={`w-full md:w-56 p-2.5 rounded-lg text-sm font-bold ${CONTROLS.input}`}
                     >
                       <option value="">{match.placeholderAway ? `----- ${match.placeholderAway} -----` : '-- Select Team --'}</option>
                       {teams.map(t => {
@@ -171,9 +172,9 @@ export const MatchesTab: React.FC = () => {
           </div>
         </div>
         
-        <div className="mt-6 bg-slate-900 text-white p-5 rounded-xl shadow-sm">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Pro Tip</h2>
-            <p className="text-sm text-slate-300 leading-tight">
+        <div className="mt-6 bg-slate-100 dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700">
+            <h2 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">Pro Tip</h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-tight">
               Select the teams playing in each match. Any team that appears in a match automatically scores progression points for their assigned player. To complete a match, simply enter the final score.
             </p>
         </div>

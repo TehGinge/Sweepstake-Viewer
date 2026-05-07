@@ -6,6 +6,7 @@ import { HomeTab } from './components/HomeTab';
 import { GroupsTab } from './components/GroupsTab';
 import { MatchesTab } from './components/MatchesTab';
 import { Settings, X } from 'lucide-react';
+import { CONTROLS, SURFACES, TEXT } from './utils/theme';
 
 type TabType = 'SETUP' | 'HOME' | 'GROUPS' | 'MATCHES';
 
@@ -20,9 +21,6 @@ function MainApp() {
     switch(tournamentId) {
       case 'WC26': return '2026';
       case 'EURO28': return '2028';
-      case 'WC22': return '2022';
-      case 'EURO20': return '2020';
-      case 'WC18': return '2018';
       default: return '';
     }
   };
@@ -86,10 +84,10 @@ function MainApp() {
   const simCount = matches.filter(m => m.homeScore !== null).length;
 
   return (
-    <div className={`min-h-screen font-sans flex flex-col overflow-x-hidden transition-colors ${settings.isDarkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      <header className="bg-slate-900 text-white px-4 md:px-8 py-4 flex flex-col md:flex-row items-center justify-between shadow-lg z-10 sticky top-0 gap-4 md:gap-0">
+    <div className="min-h-screen font-sans flex flex-col overflow-x-hidden transition-colors bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-100">
+      <header className="px-4 md:px-8 py-4 flex flex-col md:flex-row items-center justify-between shadow-lg z-10 sticky top-0 gap-4 md:gap-0 border-b transition-colors bg-white/95 dark:bg-slate-950 text-slate-900 dark:text-white border-slate-200 dark:border-slate-800 backdrop-blur">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm p-1.5">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm p-1.5 bg-emerald-100 dark:bg-white border border-emerald-200 dark:border-transparent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 w-full h-full">
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <line x1="12" y1="4" x2="12" y2="20" />
@@ -99,22 +97,19 @@ function MainApp() {
             </svg>
           </div>
           <h1 className="text-xl md:text-2xl font-black tracking-tight flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-white drop-shadow-sm">{getTournamentName()}</span>
-            <span className="text-emerald-400 drop-shadow-sm">{settings.customTitle !== undefined ? settings.customTitle : 'SWEEPSTAKE'}</span>
+            <span className="text-slate-900 dark:text-white drop-shadow-sm">{getTournamentName()}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 drop-shadow-sm">{settings.customTitle !== undefined ? settings.customTitle : 'SWEEPSTAKE'}</span>
             <select 
               value={tournamentId} 
               onChange={(e) => setTournamentId(e.target.value as any)}
-              className="ml-auto md:ml-2 text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 rounded px-2 py-1 outline-none focus:border-emerald-500"
+              className={`ml-auto md:ml-2 text-xs font-bold rounded px-2 py-1 ${CONTROLS.input}`}
             >
               <option value="WC26">World Cup 2026</option>
               <option value="EURO28">Euro 2028 (Test)</option>
-              <option value="WC22">World Cup 2022</option>
-              <option value="EURO20">Euro 2020</option>
-              <option value="WC18">World Cup 2018</option>
             </select>
             <button 
               onClick={() => setShowSettings(true)}
-              className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+              className="p-1.5 rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
               <Settings size={18} />
             </button>
@@ -134,18 +129,18 @@ function MainApp() {
       
       {showSettings && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Settings</h2>
-              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+          <div className={`${SURFACES.card} rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col`}>
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className={`text-xl font-black ${TEXT.primary}`}>Settings</h2>
+              <button onClick={() => setShowSettings(false)} className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                 <X size={24} />
               </button>
             </div>
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Dark Mode</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Toggle dark theme</p>
+                  <h3 className={`font-bold ${TEXT.secondary}`}>Dark Mode</h3>
+                  <p className={`text-xs ${TEXT.muted}`}>Toggle dark theme</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={settings.isDarkMode ?? false} onChange={(e) => updateSettings({ isDarkMode: e.target.checked })} />
@@ -155,8 +150,8 @@ function MainApp() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Randomize All</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Show randomize button in Setup</p>
+                  <h3 className={`font-bold ${TEXT.secondary}`}>Randomize All</h3>
+                  <p className={`text-xs ${TEXT.muted}`}>Show randomize button in Setup</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={settings.allowRandomize ?? false} onChange={(e) => updateSettings({ allowRandomize: e.target.checked })} />
@@ -166,8 +161,8 @@ function MainApp() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100">Simulate Matches</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Show simulation controls</p>
+                  <h3 className={`font-bold ${TEXT.secondary}`}>Simulate Matches</h3>
+                  <p className={`text-xs ${TEXT.muted}`}>Show simulation controls</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={settings.allowSimulate ?? false} onChange={(e) => updateSettings({ allowSimulate: e.target.checked })} />
@@ -176,14 +171,14 @@ function MainApp() {
               </div>
 
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1">Custom Title</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Override the default "SWEEPSTAKE" text</p>
+                <h3 className={`font-bold mb-1 ${TEXT.secondary}`}>Custom Title</h3>
+                <p className={`text-xs mb-2 ${TEXT.muted}`}>Override the default "SWEEPSTAKE" text</p>
                 <input 
                   type="text" 
                   value={settings.customTitle !== undefined ? settings.customTitle : 'SWEEPSTAKE'} 
                   onChange={(e) => updateSettings({ customTitle: e.target.value })}
                   placeholder="e.g. OFFICE LEAGUE"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                  className={`w-full rounded-lg px-3 py-2 text-sm font-bold ${CONTROLS.input}`}
                 />
               </div>
             </div>
@@ -191,17 +186,17 @@ function MainApp() {
         </div>
       )}
 
-      <footer className="bg-slate-900 border-t border-slate-800 py-6 mt-auto text-slate-400">
+      <footer className="py-6 mt-auto transition-colors border-t bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
         <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-4">
           <div className="text-center text-sm font-medium">
             Assign teams, enter scores, and battle for the sweepstake crown!
           </div>
           
           {settings.allowSimulate && (
-          <div className="w-full max-w-md bg-slate-800 rounded-lg p-4 border border-emerald-900/50 shadow-inner">
+          <div className="w-full max-w-md rounded-lg p-4 shadow-inner border bg-emerald-100/80 dark:bg-slate-800 border-emerald-300 dark:border-emerald-900/50">
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Time Simulator ({simCount}/{matches.length})</label>
-              <span className="text-xs text-slate-500">Test mode</span>
+              <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Time Simulator ({simCount}/{matches.length})</label>
+              <span className="text-xs text-slate-600 dark:text-slate-500">Test mode</span>
             </div>
             <input 
               type="range" 
@@ -209,7 +204,7 @@ function MainApp() {
               max={matches.length} 
               value={simCount} 
               onChange={(e) => handleSimulateSteps(parseInt(e.target.value))}
-              className="w-full accent-emerald-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-emerald-500 h-2 rounded-lg appearance-none cursor-pointer bg-emerald-200 dark:bg-slate-700"
             />
           </div>
           )}
