@@ -154,6 +154,11 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
     .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
     .slice(0, 4);
 
+  const getMatchNumber = (matchId: string, fallback: number) => {
+    const trailingDigits = matchId.match(/(\d+)(?!.*\d)/);
+    return trailingDigits ? parseInt(trailingDigits[1], 10) : fallback;
+  };
+
   return (
     <div className="max-w-[1600px] mx-auto space-y-6 lg:space-y-8 flex flex-col xl:flex-row gap-6">
       
@@ -358,9 +363,10 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
           <p className="text-slate-600 dark:text-slate-400 text-sm italic px-1">No upcoming matches.</p>
         ) : (
           <div className="space-y-3">
-             {upcomingMatches.map(match => {
+             {upcomingMatches.map((match, index) => {
                 const homeTeam = teams.find(t => t.id === match.homeTeamId);
                 const awayTeam = teams.find(t => t.id === match.awayTeamId);
+               const matchNumber = getMatchNumber(match.id, index + 1);
 
                 return (
                   <button 
@@ -375,7 +381,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                     className="w-full text-left bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all cursor-pointer"
                   >
                     <div className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-300 mb-3 flex justify-between items-center bg-slate-100 dark:bg-slate-900 px-2 py-1.5 rounded-md border border-slate-200 dark:border-slate-700">
-                      <span className="truncate pr-2">{match.stage === 'GROUP' ? `Group ${match.group}` : match.stage}</span>
+                      <span className="truncate pr-2">{`Match ${matchNumber} • ${match.stage === 'GROUP' ? `Group ${match.group}` : match.stage}`}</span>
                       <span className="shrink-0 text-emerald-700 dark:text-emerald-400">
                         {match.date ? new Date(match.date).toLocaleString('en-GB', { timeZone: 'Europe/London', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' BST' : 'TBD'}
                       </span>
