@@ -1,59 +1,72 @@
 # Sweepstake Viewer
 
-Sweepstake Viewer is a static football tournament tracker for running a friends-and-family sweepstake. It lets you assign teams to players, enter match results, follow group tables, and watch the leaderboard update as teams progress through the tournament.
+A minimalist web app for running friends-and-family football sweepstakes. Assign teams, enter match results, follow group tables, and watch the leaderboard update live as the tournament progresses.
 
-The app currently supports World Cup 2026 as the main tournament view, along with Euro 2028 for testing and comparison.
+## Features
 
-## Run locally
+- **Local & Offline Mode**: Run entirely in the browser using local state.
+- **Live Sharing**: Sync game state instantly with friends using Firebase Realtime Database.
+- **Host Controls**: Create games, manage scores, and safely delete your hosted games.
+- **Dynamic Leaderboard**: Automatically calculates points based on match results.
+- **PWA & SEO Ready**: Includes standard metadata, social preview images (Open Graph), and webmanifest.
 
-Prerequisite: Node.js
+## Setup & Run Locally
+
+Prerequisite: [Node.js](https://nodejs.org/)
 
 1. Install dependencies:
-   `npm install`
+   ```bash
+   npm install
+   ```
 2. Start the development server:
-   `npm run dev`
-3. Open the local Vite URL shown in the terminal.
+   ```bash
+   npm run dev
+   ```
+3. Open the local Vite URL shown in your terminal.
 
-No environment variables are required for local use.
+*Note: You can run the app locally without any Firebase configuration. It will default to Local Mode.*
 
-## Live sharing with Firebase (optional)
+## Live Sharing (Firebase Configuration)
 
-The app now supports live game sharing through Firebase Realtime Database.
-Host changes sync immediately to viewers on the same game URL.
+To enable live, sharable links (`#game=<id>`), you'll need to connect the app to a Firebase project.
 
-### 1. Create Firebase project
+### 1. Firebase Project Setup
+- Go to the [Firebase Console](https://console.firebase.google.com/) and create a project.
+- **Authentication**: Enable **Anonymous** sign-in (Build > Authentication > Sign-in method).
+- **Realtime Database**: Create a database (Build > Realtime Database).
 
-Enable:
-- Authentication: Anonymous sign-in
-- Realtime Database
+### 2. Environment Variables
+Copy `.env.example` to `.env` and fill in your app's Firebase configuration values:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.europe-west1.firebasedatabase.app/
+VITE_FIREBASE_PROJECT_ID=your-project
+VITE_FIREBASE_APP_ID=your_app_id
+```
 
-### 2. Configure environment variables
+### 3. Database Rules
+Copy the rules from `firebase.database.rules.json` into your Realtime Database Rules tab in the Firebase console.
+These rules ensure that:
+- Anyone can read the games (so viewers can see the scores).
+- Only the anonymous user who originally created the game (the Host) can update or delete it.
 
-Copy `.env.example` to `.env` and fill in your Firebase web config values.
+## Deployment (e.g. GitHub Pages)
 
-### 3. Apply database rules
+Sweepstake Viewer is a static Vite application, making it easy to deploy.
 
-Use `firebase.database.rules.json` as your Realtime Database rules.
+**Important for Deployments:**
+Firebase relies on environment variables (`VITE_FIREBASE_...`) at build time. Ensure you add your Firebase credentials to your deployment platform's Secrets/Environment Variables setting (e.g. GitHub Repository Secrets) so they are injected when `npm run build` runs.
 
-These rules allow:
-- Public read access for viewers
-- Writes only by the anonymous authenticated owner who created the game
+**Authorizing your Domain:**
+If deploying to a domain other than `localhost`, you must add that domain to your Firebase Authorized Domains so Authentication succeeds:
+1. Firebase Console > Authentication > Settings > Authorized domains.
+2. Click **Add domain** and enter your deployment URL (e.g., `yourusername.github.io`).
 
-### 4. Start a live game in the app
+## How to Use
 
-In `Setup`, click `Start Live Game & Copy Link`.
-This creates a unique game URL (`#game=<id>`), copies it, and begins real-time sync.
-
-Notes:
-- If Firebase is not configured, the app still runs in local browser mode.
-- The host can edit from the browser profile that created the live game (anonymous auth identity).
-
-## How to use the app
-
-1. Go to `Setup` to add players, adjust scoring settings, and assign teams manually or at random.
-2. Use `Home` to view the live leaderboard and each player's assigned teams.
-3. Enter group-stage results in `Groups` to update standings and qualification.
-4. Move to `Knockouts` to enter bracket results once teams progress beyond the groups.
-5. Optionally enable the built-in simulation controls in Settings for testing scenarios.
-
-App state is stored in the browser, so players, scores, and tournament settings persist locally between visits on the same device.
+1. **Setup**: Add players, assign teams (manually or randomly), and tweak scoring rules.
+2. **Start Live Game**: In the Setup tab, click *Start Live Game* to generate a shareable `#game=...` URL. Your browser profile becomes the Host.
+3. **Groups / Knockouts**: Enter match results as the tournament unfolds.
+4. **Home**: View the live-updating leaderboard and team assignments.
+5. **Manage**: As the Host, you can update settings or completely delete the live game from the cloud from the Setup tab.
