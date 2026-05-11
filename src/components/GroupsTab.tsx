@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { getGroupStandings } from '../utils/scoring';
 import { CONTROLS, SURFACES, TEXT, getPlayerTheme, getResultBadgeClass } from '../utils/theme';
 
-export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?: () => void }> = ({ initialGroup, onGroupHandled }) => {
+export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?: () => void; onTeamClick: (teamId: string) => void }> = ({ initialGroup, onGroupHandled, onTeamClick }) => {
   const { matches, setMatches, updateMatch, players, teams, groups, tournamentId, settings, isReadOnly } = useAppContext();
   const [activeGroup, setActiveGroup] = useState<string>(initialGroup || 'A');
 
@@ -117,7 +117,19 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                   const theme = getPlayerTheme(assigneeIndex);
                   
                   return (
-                  <tr key={team.id} className={`h-12 border-b border-slate-50 dark:border-slate-700/50 last:border-none ${idx < 2 ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : ''}`}>
+                  <tr
+                    key={team.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onTeamClick(team.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onTeamClick(team.id);
+                      }
+                    }}
+                    className={`h-12 border-b border-slate-50 dark:border-slate-700/50 last:border-none cursor-pointer ${idx < 2 ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : ''}`}
+                  >
                     <td className="font-bold text-slate-600 dark:text-slate-400">{idx + 1}</td>
                     <td className="font-bold">
                       <div className="flex items-center gap-2 h-12">

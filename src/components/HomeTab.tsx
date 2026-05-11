@@ -5,7 +5,7 @@ import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 
 type SortConfig = { key: 'name' | 'group' | 'fifaRanking' | 'assignee' | 'points' | 'stage' | 'played'; direction: 'asc' | 'desc' };
 
-export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToGroup: (group: string) => void }> = ({ setActiveTab, onNavigateToGroup }) => {
+export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToGroup: (group: string) => void; onTeamClick: (teamId: string) => void }> = ({ setActiveTab, onNavigateToGroup, onTeamClick }) => {
   const { players, matches, config, teams, isReadOnly } = useAppContext();
   const [viewMode, setViewMode] = useState<'PLAYERS' | 'TEAMS'>('PLAYERS');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'fifaRanking', direction: 'asc' });
@@ -238,7 +238,13 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                    }
 
                    return (
-                     <div key={team.id} className={`flex items-center justify-between p-2 border rounded-lg transition-colors bg-white dark:bg-slate-950 ${cardBorderClass}`}>
+                     <button
+                       key={team.id}
+                       type="button"
+                       onClick={() => onTeamClick(team.id)}
+                       className={`w-full flex items-center justify-between p-2 border rounded-lg transition-colors bg-white dark:bg-slate-950 text-left ${cardBorderClass}`}
+                       title={`Open ${team.name} in FotMob`}
+                     >
                        <div className="flex items-center gap-2 flex-1 min-w-0">
                          <img src={`https://flagcdn.com/w40/${team.iso2}.png`} alt={team.name} className="w-6 h-4 object-cover rounded shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)] shrink-0" title={team.name} />
                          <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
@@ -249,7 +255,7 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                        <div className={`px-2 py-1 flex-col justify-center items-center rounded text-center shrink-0 min-w-[2.5rem] ml-2 border flex ${theme.lightBg} ${theme.border}`}>
                          <span className={`font-black text-sm leading-none text-slate-900 dark:text-white`}>{hasPlayed ? pts : '-'}</span>
                        </div>
-                     </div>
+                     </button>
                    );
                 })}
                 {entry.teams.length === 0 && (
@@ -314,7 +320,19 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                 {sortedTeams.map((team) => {
                   const theme = getPlayerTheme(team.assigneeIndex);
                   return (
-                  <tr key={team.id} className={`hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors ${eliminatedMap.get(team.id) && team.played >= 3 ? 'opacity-40 grayscale' : ''}`}>
+                  <tr
+                    key={team.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onTeamClick(team.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onTeamClick(team.id);
+                      }
+                    }}
+                    className={`hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer ${eliminatedMap.get(team.id) && team.played >= 3 ? 'opacity-40 grayscale' : ''}`}
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img src={`https://flagcdn.com/w40/${team.iso2}.png`} alt={team.name} className="w-6 h-4 object-cover rounded shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" title={team.name} />

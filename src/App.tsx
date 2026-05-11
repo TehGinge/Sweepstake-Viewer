@@ -5,8 +5,9 @@ import { SetupTab } from './components/SetupTab';
 import { HomeTab } from './components/HomeTab';
 import { GroupsTab } from './components/GroupsTab';
 import { MatchesTab } from './components/MatchesTab';
-import { Settings, X } from 'lucide-react';
+import { ExternalLink, Settings, X } from 'lucide-react';
 import { CONTROLS, SURFACES, TEXT } from './utils/theme';
+import { getFotmobOverviewUrl } from './data/fotmob';
 
 type TabType = 'SETUP' | 'HOME' | 'GROUPS' | 'MATCHES';
 
@@ -26,6 +27,8 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState<TabType>('HOME');
   const [targetGroup, setTargetGroup] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [fotmobUrl, setFotmobUrl] = useState<string | null>(null);
+  const [fotmobTeamName, setFotmobTeamName] = useState<string>('');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const stored = localStorage.getItem('theme-dark');
     if (stored !== null) return stored === 'true';
@@ -39,12 +42,26 @@ function MainApp() {
     updateSettings,
     matches,
     setMatches,
+    teams,
     isReadOnly,
     cloudGameId,
     cloudStatus,
     cloudError,
     isCloudOwner,
   } = useAppContext();
+
+  const closeFotmobModal = () => {
+    setFotmobUrl(null);
+    setFotmobTeamName('');
+  };
+
+  const handleTeamClick = (teamId: string) => {
+    const url = getFotmobOverviewUrl(teamId);
+    if (!url) return;
+    const team = teams.find(t => t.id === teamId);
+    setFotmobTeamName(team?.name ?? teamId);
+    setFotmobUrl(url);
+  };
 
   useEffect(() => {
     if (isReadOnly && activeTab === 'SETUP') {
@@ -207,10 +224,47 @@ function MainApp() {
         )}
 
         {activeTab === 'SETUP' && !isReadOnly && <SetupTab />}
-        {activeTab === 'HOME' && <HomeTab setActiveTab={setActiveTab} onNavigateToGroup={(group) => { setActiveTab('GROUPS'); setTargetGroup(group); }} />}
-        {activeTab === 'GROUPS' && <GroupsTab initialGroup={targetGroup} onGroupHandled={() => setTargetGroup(null)} />}
+        {activeTab === 'HOME' && <HomeTab setActiveTab={setActiveTab} onNavigateToGroup={(group) => { setActiveTab('GROUPS'); setTargetGroup(group); }} onTeamClick={handleTeamClick} />}
+        {activeTab === 'GROUPS' && <GroupsTab initialGroup={targetGroup} onGroupHandled={() => setTargetGroup(null)} onTeamClick={handleTeamClick} />}
         {activeTab === 'MATCHES' && <MatchesTab />}
       </main>
+
+      {fotmobUrl && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeFotmobModal}>
+          <div className={`${SURFACES.card} rounded-xl shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col`} onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+              <div>
+                <h2 className={`text-lg md:text-xl font-black ${TEXT.primary}`}>{fotmobTeamName} on FotMob</h2>
+                <p className={`text-xs md:text-sm ${TEXT.muted}`}>Country overview</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.open(fotmobUrl, '_blank', 'noopener,noreferrer')}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+                >
+                  <ExternalLink size={14} />
+                  Open
+                </button>
+                <button onClick={closeFotmobModal} className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="h-[70vh] bg-white dark:bg-slate-950">
+              <iframe
+                src={fotmobUrl}
+                title={`${fotmobTeamName} FotMob overview`}
+                className="w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+            <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400">
+              If the embed is blocked by your browser or network policy, use Open to launch the page directly.
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSettings && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
