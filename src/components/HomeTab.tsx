@@ -6,7 +6,7 @@ import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 type SortConfig = { key: 'name' | 'group' | 'fifaRanking' | 'assignee' | 'points' | 'stage' | 'played'; direction: 'asc' | 'desc' };
 
 export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToGroup: (group: string) => void }> = ({ setActiveTab, onNavigateToGroup }) => {
-  const { players, matches, config, teams } = useAppContext();
+  const { players, matches, config, teams, isReadOnly } = useAppContext();
   const [viewMode, setViewMode] = useState<'PLAYERS' | 'TEAMS'>('PLAYERS');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'fifaRanking', direction: 'asc' });
 
@@ -143,8 +143,10 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-6xl mb-4">🏆</div>
-        <h2 className={`text-2xl font-bold ${TEXT.secondary}`}>No players yet</h2>
-        <p className={`${TEXT.muted} mt-2`}>Go to the Setup tab to add players and assign teams.</p>
+        <h2 className={`text-2xl font-bold ${TEXT.secondary}`}>{isReadOnly ? 'No published players' : 'No players yet'}</h2>
+        <p className={`${TEXT.muted} mt-2`}>
+          {isReadOnly ? 'The host has not assigned players yet, or no assignments are available yet in this live game.' : 'Go to the Setup tab to add players and assign teams.'}
+        </p>
       </div>
     );
   }

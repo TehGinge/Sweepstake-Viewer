@@ -4,7 +4,7 @@ import { getGroupStandings } from '../utils/scoring';
 import { CONTROLS, SURFACES, TEXT, getPlayerTheme, getResultBadgeClass } from '../utils/theme';
 
 export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?: () => void }> = ({ initialGroup, onGroupHandled }) => {
-  const { matches, setMatches, updateMatch, players, teams, groups, tournamentId, settings } = useAppContext();
+  const { matches, setMatches, updateMatch, players, teams, groups, tournamentId, settings, isReadOnly } = useAppContext();
   const [activeGroup, setActiveGroup] = useState<string>(initialGroup || 'A');
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
               <h2 className={`text-xl font-black ${TEXT.primary}`}>Group {activeGroup} Standings</h2>
               <span className={`inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Group {activeGroup}</span>
             </div>
-            {settings.allowSimulate && (
+            {settings.allowSimulate && !isReadOnly && (
               <button
                 onClick={simulateGroupMatches}
                 className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors"
@@ -136,6 +136,9 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
             <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
             <h2 className={`text-xl font-black ${TEXT.primary}`}>Matches</h2>
             <span className={`inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600`}>Group {activeGroup}</span>
+              {isReadOnly && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest border bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">Read only</span>
+              )}
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {groupMatches.map(match => {
@@ -207,7 +210,8 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                         min="0"
                         value={match.homeScore ?? ''} 
                         onChange={(e) => updateMatch(match.id, e.target.value === '' ? null : parseInt(e.target.value), match.awayScore)}
-                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input}`}
+                        disabled={isReadOnly}
+                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                       />
                       <span className="text-slate-500 dark:text-slate-400 font-bold px-1 text-sm">VS</span>
                       <input 
@@ -215,7 +219,8 @@ export const GroupsTab: React.FC<{ initialGroup?: string | null; onGroupHandled?
                         min="0"
                         value={match.awayScore ?? ''} 
                         onChange={(e) => updateMatch(match.id, match.homeScore, e.target.value === '' ? null : parseInt(e.target.value))}
-                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input}`}
+                        disabled={isReadOnly}
+                        className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                       />
                       {match.homeScore !== null && match.awayScore !== null && (
                         <span className={`flex items-center justify-center w-7 h-7 rounded text-[10px] font-black tracking-widest ${getResultBadgeClass(match.awayScore > match.homeScore ? 'W' : match.homeScore === match.awayScore ? 'D' : 'L')}`}>

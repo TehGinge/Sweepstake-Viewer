@@ -37,6 +37,21 @@ export interface ScoreConfig {
   matchDraw: number;
 }
 
+export interface AppSettings {
+  isDarkMode: boolean;
+  allowRandomize: boolean;
+  allowSimulate: boolean;
+  customTitle: string;
+}
+
+export interface PersistedAppState {
+  tournamentId: TournamentId;
+  players: Player[];
+  matches: Match[];
+  config: ScoreConfig;
+  settings: AppSettings;
+}
+
 export interface LeaderboardEntry {
   playerId: string;
   playerName: string;

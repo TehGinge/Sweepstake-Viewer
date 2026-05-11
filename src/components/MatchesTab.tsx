@@ -13,7 +13,7 @@ const STAGES: { stage: MatchStage; title: string }[] = [
 ];
 
 export const MatchesTab: React.FC = () => {
-  const { matches, setMatches, updateMatch, teams, tournamentId, players, settings } = useAppContext();
+  const { matches, setMatches, updateMatch, teams, tournamentId, players, settings, isReadOnly } = useAppContext();
   const [activeStage, setActiveStage] = useState<MatchStage>(tournamentId === 'WC26' ? 'R32' : 'R16');
 
   const stageMatches = matches.filter(m => m.stage === activeStage);
@@ -68,7 +68,7 @@ export const MatchesTab: React.FC = () => {
         <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden flex flex-col`}>
           <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center flex-wrap gap-4">
             <h2 className={`text-xl font-black ${TEXT.primary}`}>{STAGES.find(s => s.stage === activeStage)?.title}</h2>
-            {settings.allowSimulate && (
+              {settings.allowSimulate && !isReadOnly && (
               <button
                  onClick={simulateStageMatches}
                  className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors"
@@ -114,6 +114,7 @@ export const MatchesTab: React.FC = () => {
                       <select
                         value={match.homeTeamId || ''}
                         onChange={(e) => updateMatch(match.id, match.homeScore, match.awayScore, e.target.value || null, match.awayTeamId)}
+                        disabled={isReadOnly}
                         className={`w-full p-2.5 rounded-lg text-sm font-bold ${CONTROLS.input}`}
                       >
                         <option value="">{match.placeholderHome ? `----- ${match.placeholderHome} -----` : '-- Select Team --'}</option>
@@ -144,7 +145,7 @@ export const MatchesTab: React.FC = () => {
                       min="0"
                       value={match.homeScore ?? ''} 
                       onChange={(e) => updateMatch(match.id, e.target.value === '' ? null : parseInt(e.target.value), match.awayScore)}
-                      disabled={!match.homeTeamId || !match.awayTeamId}
+                        disabled={!match.homeTeamId || !match.awayTeamId || isReadOnly}
                       className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                     />
                     <span className="text-slate-500 dark:text-slate-400 font-bold px-1 text-sm">VS</span>
@@ -153,7 +154,7 @@ export const MatchesTab: React.FC = () => {
                       min="0"
                       value={match.awayScore ?? ''} 
                       onChange={(e) => updateMatch(match.id, match.homeScore, e.target.value === '' ? null : parseInt(e.target.value))}
-                      disabled={!match.homeTeamId || !match.awayTeamId}
+                        disabled={!match.homeTeamId || !match.awayTeamId || isReadOnly}
                       className={`w-12 h-10 text-center font-black text-lg rounded ${CONTROLS.input} disabled:bg-slate-200 disabled:dark:bg-slate-900 disabled:text-slate-500 disabled:dark:text-slate-500`}
                     />
                     {match.homeScore !== null && match.awayScore !== null && (
@@ -169,6 +170,7 @@ export const MatchesTab: React.FC = () => {
                       <select
                         value={match.awayTeamId || ''}
                         onChange={(e) => updateMatch(match.id, match.homeScore, match.awayScore, match.homeTeamId, e.target.value || null)}
+                        disabled={isReadOnly}
                         className={`w-full p-2.5 rounded-lg text-sm font-bold ${CONTROLS.input}`}
                       >
                         <option value="">{match.placeholderAway ? `----- ${match.placeholderAway} -----` : '-- Select Team --'}</option>
@@ -199,7 +201,9 @@ export const MatchesTab: React.FC = () => {
         <div className="mt-6 bg-slate-100 dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700">
             <h2 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">Pro Tip</h2>
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-tight">
-              Select the teams playing in each match. Any team that appears in a match automatically scores progression points for their assigned player. To complete a match, simply enter the final score.
+              {isReadOnly
+                ? 'This live game link is read-only for viewers. Score updates appear automatically when the host edits matches.'
+                : 'Select the teams playing in each match. Any team that appears in a match automatically scores progression points for their assigned player. To complete a match, simply enter the final score.'}
             </p>
         </div>
       </div>

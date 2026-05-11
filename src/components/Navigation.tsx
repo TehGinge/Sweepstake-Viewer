@@ -6,15 +6,19 @@ type TabType = 'SETUP' | 'HOME' | 'GROUPS' | 'MATCHES';
 interface Props {
   activeTab: TabType;
   setActiveTab: (t: TabType) => void;
+  showSetup?: boolean;
 }
 
-export const Navigation: React.FC<Props> = ({ activeTab, setActiveTab }) => {
+export const Navigation: React.FC<Props> = ({ activeTab, setActiveTab, showSetup = true }) => {
   const tabs: { id: TabType; label: string; icon: string }[] = [
     { id: 'HOME', label: 'Home', icon: '🏠' },
     { id: 'GROUPS', label: 'Groups', icon: '📊' },
     { id: 'MATCHES', label: 'Knockouts', icon: '⚔️' },
-    { id: 'SETUP', label: 'Setup', icon: '⚙️' },
   ];
+
+  if (showSetup) {
+    tabs.push({ id: 'SETUP', label: 'Setup', icon: '⚙️' });
+  }
 
   return (
     <div className={`flex p-1 rounded-md text-xs font-bold overflow-x-auto hide-scrollbar w-full md:w-auto mt-4 md:mt-0 transition-colors ${CONTROLS.segmented}`}>

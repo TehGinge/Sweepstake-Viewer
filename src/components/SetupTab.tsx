@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Trash2, Plus, Shuffle, RotateCcw, X, Copy, Save, Download } from 'lucide-react';
+import { Trash2, Plus, Shuffle, RotateCcw, X, Copy, Save, Download, Link2 } from 'lucide-react';
 import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 
 export const SetupTab: React.FC = () => {
-  const { players, setPlayers, assignTeamsRandomly, clearAllAssignments, resetTournament, teams, settings } = useAppContext();
+  const {
+    players,
+    setPlayers,
+    assignTeamsRandomly,
+    clearAllAssignments,
+    resetTournament,
+    teams,
+    settings,
+    cloudGameId,
+    cloudStatus,
+    cloudError,
+    isCloudOwner,
+    createLiveGame,
+    deleteLiveGame,
+    getLiveGameUrl,
+  } = useAppContext();
   const [isManualMode, setIsManualMode] = useState(false);
   const [showSpinModal, setShowSpinModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmRandomize, setConfirmRandomize] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [isDeletingLiveGame, setIsDeletingLiveGame] = useState(false);
   const [savedStates, setSavedStates] = useState<Record<string, any>>({});
   const [saveSlotName, setSaveSlotName] = useState("");
+  const [liveMessage, setLiveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     setSavedStates(JSON.parse(localStorage.getItem('worldCupSaves') || '{}'));
@@ -127,6 +144,60 @@ export const SetupTab: React.FC = () => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleCreateLiveGame = async () => {
+    const result = await createLiveGame();
+
+    if (!result.url) {
+      setLiveMessage({ type: 'error', text: result.error || 'Could not create a live game link.' });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(result.url);
+      setLiveMessage({ type: 'success', text: 'Live game started and link copied. Share it with viewers for real-time updates.' });
+    } catch {
+      setLiveMessage({ type: 'success', text: 'Live game started. Copy the current URL from your browser to share.' });
+    }
+  };
+
+  const handleCopyLiveLink = async () => {
+    const liveUrl = getLiveGameUrl();
+
+    if (!liveUrl) {
+      setLiveMessage({ type: 'error', text: 'No live game URL is available yet.' });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(liveUrl);
+      setLiveMessage({ type: 'success', text: 'Live viewer URL copied.' });
+    } catch {
+      setLiveMessage({ type: 'error', text: 'Clipboard permission was blocked. Please copy the URL from the address bar.' });
+    }
+  };
+
+  const handleDeleteLiveGame = async () => {
+    if (!cloudGameId || !isCloudOwner || isDeletingLiveGame) {
+      return;
+    }
+
+    const shouldDelete = window.confirm('Delete this live game? This cannot be undone. Viewers will lose access to this link.');
+    if (!shouldDelete) {
+      return;
+    }
+
+    setIsDeletingLiveGame(true);
+    const result = await deleteLiveGame();
+    setIsDeletingLiveGame(false);
+
+    if (result.success) {
+      setLiveMessage({ type: 'success', text: 'Live game deleted. You are now back in local mode.' });
+      return;
+    }
+
+    setLiveMessage({ type: 'error', text: result.error || 'Could not delete the live game.' });
   };
 
   return (
@@ -287,7 +358,63 @@ export const SetupTab: React.FC = () => {
           </div>
         )}
       </div>
-      
+
+      <div className="bg-gradient-to-br from-white to-sky-50/50 dark:from-slate-900 dark:to-slate-950 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Link2 size={20} className="text-sky-600 dark:text-sky-400" />
+          <h3 className={`text-lg font-black ${TEXT.primary}`}>Live Game (Firebase)</h3>
+        </div>
+        <p className={`text-sm ${TEXT.muted} mb-5`}>
+          Start a live game URL to sync scores and standings in real time. Viewers can watch updates immediately while only the host can edit.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {!cloudGameId ? (
+            <button
+              onClick={handleCreateLiveGame}
+              className="px-4 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-500 transition-colors shadow-sm inline-flex items-center justify-center disabled:opacity-70"
+              disabled={cloudStatus === 'connecting' || isDeletingLiveGame}
+            >
+              <Link2 size={16} className="mr-2" /> {cloudStatus === 'connecting' ? 'Starting Live Game...' : 'Start Live Game & Copy Link'}
+            </button>
+          ) : (
+            <button
+              onClick={handleCopyLiveLink}
+              className="px-4 py-2 bg-sky-600 text-white rounded-lg font-bold text-sm hover:bg-sky-500 transition-colors shadow-sm inline-flex items-center justify-center disabled:opacity-70"
+              disabled={isDeletingLiveGame}
+            >
+              <Link2 size={16} className="mr-2" /> Copy Live Viewer URL
+            </button>
+          )}
+
+          {cloudGameId && isCloudOwner && (
+            <button
+              onClick={handleDeleteLiveGame}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-500 transition-colors shadow-sm inline-flex items-center justify-center disabled:opacity-70"
+              disabled={isDeletingLiveGame || cloudStatus === 'connecting'}
+            >
+              <Trash2 size={16} className="mr-2" /> {isDeletingLiveGame ? 'Deleting Live Game...' : 'Delete Live Game'}
+            </button>
+          )}
+
+          <span className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold">
+            {cloudGameId ? `Game ${cloudGameId} • ${isCloudOwner ? 'Host' : 'Viewer'}` : 'No live game yet'}
+          </span>
+        </div>
+
+        {(liveMessage || cloudError) && (
+          <div
+            className={`mt-4 rounded-lg px-4 py-3 text-sm font-semibold border ${
+              liveMessage?.type === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+            }`}
+          >
+            {liveMessage?.text || cloudError}
+          </div>
+        )}
+      </div>
+
       <div className="bg-red-100/70 dark:bg-red-900/15 p-6 border border-red-200 dark:border-red-900/40 rounded-xl shadow-sm">
           <h3 className="text-sm font-black text-red-800 dark:text-red-400 uppercase tracking-widest mb-2">Danger Zone</h3>
           <p className="text-sm text-red-700 dark:text-red-400 mb-4">Resetting the tournament will clear all match results (group and knockouts) but will keep your players and their assignments.</p>

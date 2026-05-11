@@ -16,6 +16,38 @@ Prerequisite: Node.js
 
 No environment variables are required for local use.
 
+## Live sharing with Firebase (optional)
+
+The app now supports live game sharing through Firebase Realtime Database.
+Host changes sync immediately to viewers on the same game URL.
+
+### 1. Create Firebase project
+
+Enable:
+- Authentication: Anonymous sign-in
+- Realtime Database
+
+### 2. Configure environment variables
+
+Copy `.env.example` to `.env` and fill in your Firebase web config values.
+
+### 3. Apply database rules
+
+Use `firebase.database.rules.json` as your Realtime Database rules.
+
+These rules allow:
+- Public read access for viewers
+- Writes only by the anonymous authenticated owner who created the game
+
+### 4. Start a live game in the app
+
+In `Setup`, click `Start Live Game & Copy Link`.
+This creates a unique game URL (`#game=<id>`), copies it, and begins real-time sync.
+
+Notes:
+- If Firebase is not configured, the app still runs in local browser mode.
+- The host can edit from the browser profile that created the live game (anonymous auth identity).
+
 ## How to use the app
 
 1. Go to `Setup` to add players, adjust scoring settings, and assign teams manually or at random.
