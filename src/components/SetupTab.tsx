@@ -494,20 +494,20 @@ export const SetupTab: React.FC = () => {
       </div>
 
       {showSpinModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`${SURFACES.card} rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]`}>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 lg:p-6">
+          <div className={`${SURFACES.card} rounded-xl shadow-2xl w-full max-w-7xl overflow-hidden flex flex-col max-h-[94vh]`}>
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <h2 className={`text-xl font-black ${TEXT.primary}`}>Spin The Wheel</h2>
               <button onClick={() => setShowSpinModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
                 <X size={24} />
               </button>
             </div>
-            <div className="p-6 flex-1 overflow-y-auto">
+            <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
               <p className={`${TEXT.muted} mb-6 text-sm`}>
                 Copy the lists below and paste them into any "Spin The Wheel" website. We've split this into distinct draws to ensure fairness.
               </p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
                 {/* Pot 1 */}
                 <div className="space-y-4">
                   <div className="pb-2 border-b border-slate-200 dark:border-slate-700">
@@ -518,7 +518,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 1 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot1TeamsText}
                         readOnly
                       />
@@ -534,7 +534,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot1PlayersText}
                         readOnly
                       />
@@ -558,7 +558,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 2 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot2TeamsText}
                         readOnly
                       />
@@ -574,7 +574,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot2PlayersText}
                         readOnly
                       />
@@ -598,7 +598,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Pot 3 Teams</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot3TeamsText}
                         readOnly
                       />
@@ -614,7 +614,7 @@ export const SetupTab: React.FC = () => {
                     <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2 tracking-wider">Players</h3>
                     <div className="relative">
                       <textarea 
-                        className="w-full h-32 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
+                        className="w-full h-40 lg:h-44 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-mono focus:outline-none"
                         value={pot3PlayersText}
                         readOnly
                       />
