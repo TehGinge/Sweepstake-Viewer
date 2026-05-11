@@ -1,6 +1,7 @@
 {
   "rules": {
     "games": {
+      ".indexOn": ["meta/ownerUid"],
       "$gameId": {
         ".read": true,
         ".write": "auth != null && ( (!data.exists() && newData.child('meta/ownerUid').val() === auth.uid) || data.child('meta/ownerUid').val() === auth.uid )",

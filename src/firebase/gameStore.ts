@@ -1,4 +1,4 @@
-import { DataSnapshot, off, onValue, push, ref, remove, set, update } from 'firebase/database';
+import { DataSnapshot, off, onValue, push, ref, remove, set, update, get, query, orderByChild, equalTo } from 'firebase/database';
 import { getFirebaseServices } from './client';
 import { AppSettings, Match, PersistedAppState, Player, ScoreConfig, TournamentId } from '../types';
 
@@ -207,4 +207,27 @@ export const deleteCloudGame = async (gameId: string): Promise<void> => {
   }
 
   await remove(ref(services.database, `games/${gameId}`));
+};
+
+export const getUserCloudGames = async (ownerUid: string): Promise<{ id: string; meta: CloudGameRecord['meta'] }[]> => {
+  const services = getFirebaseServices();
+  if (!services) {
+    throw new Error('Firebase is not configured.');
+  }
+
+  const gamesRef = ref(services.database, 'games');
+  const q = query(gamesRef, orderByChild('meta/ownerUid'), equalTo(ownerUid));
+  
+  const snapshot = await get(q);
+  if (!snapshot.exists()) return [];
+
+  const results: { id: string; meta: CloudGameRecord['meta'] }[] = [];
+  snapshot.forEach((child) => {
+    const meta = getMetaFromSnapshot(child);
+    if (meta) {
+      results.push({ id: child.key!, meta });
+    }
+  });
+
+  return results.sort((a, b) => b.meta.createdAt - a.meta.createdAt);
 };

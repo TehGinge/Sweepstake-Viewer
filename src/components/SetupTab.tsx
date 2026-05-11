@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Trash2, Plus, Shuffle, RotateCcw, X, Copy, Save, Download, Link2 } from 'lucide-react';
+import { Trash2, Plus, Shuffle, RotateCcw, X, Copy, Save, Download, Link2, List, ExternalLink } from 'lucide-react';
 import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
+import { getUserCloudGames, CloudGameRecord } from '../firebase/gameStore';
+import { ensureAnonymousAuth } from '../firebase/client';
 
 export const SetupTab: React.FC = () => {
   const {
@@ -28,12 +30,27 @@ export const SetupTab: React.FC = () => {
   const [confirmClear, setConfirmClear] = useState(false);
   const [isDeletingLiveGame, setIsDeletingLiveGame] = useState(false);
   const [savedStates, setSavedStates] = useState<Record<string, any>>({});
+  const [userGames, setUserGames] = useState<{ id: string; meta: CloudGameRecord['meta'] }[]>([]);
   const [saveSlotName, setSaveSlotName] = useState("");
   const [liveMessage, setLiveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     setSavedStates(JSON.parse(localStorage.getItem('worldCupSaves') || '{}'));
   }, []);
+
+  useEffect(() => {
+    fetchUserGames();
+  }, [cloudGameId]); // Refresh when a game is created or deleted
+
+  const fetchUserGames = async () => {
+    try {
+      const auth = await ensureAnonymousAuth();
+      const games = await getUserCloudGames(auth.uid);
+      setUserGames(games);
+    } catch (err) {
+      console.error("Could not fetch user games", err);
+    }
+  };
 
   const saveState = () => {
     const name = saveSlotName.trim() || `Save ${new Date().toLocaleString()}`;
@@ -411,6 +428,40 @@ export const SetupTab: React.FC = () => {
             }`}
           >
             {liveMessage?.text || cloudError}
+          </div>
+        )}
+
+        {userGames.length > 0 && (
+          <div className="mt-6 border-t border-sky-100 dark:border-slate-800 pt-5">
+            <h4 className={`text-sm font-black uppercase tracking-widest ${TEXT.muted} mb-3 flex items-center`}>
+              <List size={14} className="mr-2" /> Your Hosted Games
+            </h4>
+            <div className="space-y-2">
+              {userGames.map(game => {
+                const isCurrent = cloudGameId === game.id;
+                return (
+                  <div key={game.id} className={`flex items-center justify-between p-3 rounded-lg text-sm border ${isCurrent ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
+                    <div>
+                      <div className="font-bold text-slate-800 dark:text-slate-200">
+                        {game.id} {isCurrent && <span className="ml-2 text-[10px] bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-300 px-2 py-0.5 rounded-full uppercase">Current</span>}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Created: {new Date(game.meta.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    {!isCurrent && (
+                      <a 
+                        href={`#game=${game.id}`}
+                        className="p-2 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors"
+                        title="Open Game"
+                      >
+                        <ExternalLink size={16} />
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
