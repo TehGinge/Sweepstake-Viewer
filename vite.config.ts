@@ -16,6 +16,13 @@ export default defineConfig(({mode}) => {
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
+      proxy: {
+        '/api/football-data': {
+          target: 'https://api.football-data.org/v4',
+          changeOrigin: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/api\/football-data/, ''),
+        },
+      },
     },
   };
 });

@@ -51,6 +51,59 @@ These rules ensure that:
 - Anyone can read the games (so viewers can see the scores).
 - Only the anonymous user who originally created the game (the Host) can update or delete it.
 
+## Automatic Score Sync (Optional)
+
+The app can automatically pull finished match scores from football-data.org and apply them to unfinished matches.
+
+How it works:
+- In local mode, your browser fetches and applies updates.
+- In live mode, only the Host fetches; viewers receive updates through existing Firebase realtime sync.
+- Finished matches remain locked and are not overwritten.
+
+Add these values to `.env` to enable it:
+
+```env
+# Use live provider (default) or mock provider for testing
+VITE_SCORE_FEED_MODE=live
+
+VITE_FOOTBALL_DATA_API_TOKEN=your_token_here
+
+# Optional overrides (defaults shown)
+# In local development, the app defaults to /api/football-data (Vite proxy) to avoid CORS.
+# You can still override explicitly if needed:
+VITE_FOOTBALL_DATA_API_BASE_URL=https://api.football-data.org/v4
+VITE_SCORE_FEED_WC26_COMPETITION=WC
+VITE_SCORE_FEED_WC26_SEASON=2026
+VITE_SCORE_FEED_EURO28_COMPETITION=EC
+VITE_SCORE_FEED_EURO28_SEASON=2028
+
+# Optional for mock mode
+VITE_SCORE_FEED_MOCK_LIMIT=6
+```
+
+Notes:
+- Automatic sync is disabled if `VITE_FOOTBALL_DATA_API_TOKEN` is missing.
+- Polling cadence is adaptive and increases around active fixtures.
+- A single fetch cycle covers all users in a live game because only the Host writes updates.
+- Local development uses the built-in Vite proxy path (`/api/football-data`) by default to bypass browser CORS restrictions.
+- After changing `.env` or proxy settings, restart `npm run dev`.
+
+### Testing Before Fixtures Are Played
+
+Use mock mode to validate the full end-to-end flow right now:
+
+1. Set `VITE_SCORE_FEED_MODE=mock` in `.env`.
+2. Restart the Vite dev server.
+3. Open a host session and (optionally) a viewer session with the same live game URL.
+4. Wait for the next auto-sync cycle. The app will apply deterministic mock scores to unfinished matches.
+5. Confirm the viewer updates in realtime through Firebase.
+
+When you're done testing, switch back to live mode:
+
+```env
+VITE_SCORE_FEED_MODE=live
+```
+
 ## Deployment (e.g. GitHub Pages)
 
 Sweepstake Viewer is a static Vite application, making it easy to deploy.

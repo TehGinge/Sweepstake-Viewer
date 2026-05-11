@@ -1,0 +1,495 @@
+import { Match, Team, TournamentId } from '../types';
+
+const LIVE_SOURCE_NAME = 'football-data.org';
+const MOCK_SOURCE_NAME = 'mock-score-feed';
+
+const FINISHED_PROVIDER_STATUSES = new Set([
+  'FINISHED',
+  'AWARDED',
+  'AFTER_EXTRA_TIME',
+  'PENALTY_SHOOTOUT',
+]);
+
+const TEAM_CODE_ALIASES: Record<string, string> = {
+  SAU: 'KSA',
+  UKR: 'UKR',
+};
+
+const TEAM_NAME_ALIASES: Record<string, string> = {
+  coteivoire: 'CIV',
+  ivorycoast: 'CIV',
+  republicofireland: 'IRL',
+  ireland: 'IRL',
+  southkorea: 'KOR',
+  korea: 'KOR',
+  unitedstates: 'USA',
+  usa: 'USA',
+  turkey: 'TUR',
+  turkiye: 'TUR',
+  czechrepublic: 'CZE',
+  drcongo: 'COD',
+  democraticrepublicofthecongo: 'COD',
+};
+
+const ACTIVE_WINDOW_BEFORE_KICKOFF_MS = 10 * 60 * 1000;
+const ACTIVE_WINDOW_AFTER_KICKOFF_MS = 140 * 60 * 1000;
+const ACTIVE_SYNC_DELAY_MS = 75 * 1000;
+const RECENTLY_DUE_SYNC_DELAY_MS = 10 * 60 * 1000;
+const UPCOMING_SYNC_DELAY_MS = 15 * 60 * 1000;
+const IDLE_SYNC_DELAY_MS = 30 * 60 * 1000;
+const NO_PENDING_SYNC_DELAY_MS = 60 * 60 * 1000;
+const DEV_PROXY_BASE_URL = '/api/football-data';
+
+type ScoreFeedMode = 'live' | 'mock';
+
+type ProviderMatch = {
+  kickoffUtc: string | null;
+  homeCode: string | null;
+  awayCode: string | null;
+  homeName: string | null;
+  awayName: string | null;
+  status: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+export interface ScoreUpdate {
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  source: string;
+}
+
+export interface FetchScoreUpdatesParams {
+  tournamentId: TournamentId;
+  matches: Match[];
+  teams: Team[];
+}
+
+export type FetchScoreUpdatesResult =
+  | {
+      status: 'ok';
+      source: string;
+      fetchedAt: number;
+      updates: ScoreUpdate[];
+    }
+  | {
+      status: 'disabled';
+      source: string;
+      fetchedAt: number;
+      updates: [];
+      reason: string;
+    };
+
+export interface ApplyScoreUpdatesResult {
+  matches: Match[];
+  appliedCount: number;
+}
+
+const normalizeText = (value: string): string => {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+};
+
+const parseDateMs = (value?: string): number | null => {
+  if (!value) return null;
+  const ms = Date.parse(value);
+  return Number.isNaN(ms) ? null : ms;
+};
+
+const isUnfinishedMatch = (match: Match): boolean => {
+  return !(match.homeScore !== null && match.awayScore !== null && match.status === 'FINISHED');
+};
+
+const getCompetitionCode = (tournamentId: TournamentId): string => {
+  if (tournamentId === 'WC26') {
+    return (import.meta.env.VITE_SCORE_FEED_WC26_COMPETITION as string | undefined)?.trim() || 'WC';
+  }
+
+  return (import.meta.env.VITE_SCORE_FEED_EURO28_COMPETITION as string | undefined)?.trim() || 'EC';
+};
+
+const getScoreFeedMode = (): ScoreFeedMode => {
+  const configured = (import.meta.env.VITE_SCORE_FEED_MODE as string | undefined)?.trim().toLowerCase();
+  return configured === 'mock' ? 'mock' : 'live';
+};
+
+const getMockUpdateLimit = (): number => {
+  const configured = Number.parseInt((import.meta.env.VITE_SCORE_FEED_MOCK_LIMIT as string | undefined) || '6', 10);
+  if (Number.isNaN(configured)) return 6;
+  return Math.max(1, Math.min(32, configured));
+};
+
+const createDeterministicScore = (matchId: string): { homeScore: number; awayScore: number } => {
+  let hash = 0;
+  for (let i = 0; i < matchId.length; i++) {
+    hash = (hash * 31 + matchId.charCodeAt(i)) >>> 0;
+  }
+
+  const homeScore = hash % 4;
+  let awayScore = Math.floor(hash / 7) % 4;
+
+  if (homeScore === awayScore) {
+    awayScore = (awayScore + 1) % 5;
+  }
+
+  return { homeScore, awayScore };
+};
+
+const deriveMockScoreUpdates = (matches: Match[]): ScoreUpdate[] => {
+  const maxUpdates = getMockUpdateLimit();
+
+  const unfinished = matches
+    .filter((match) => Boolean(match.homeTeamId && match.awayTeamId) && isUnfinishedMatch(match))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .slice(0, maxUpdates);
+
+  return unfinished.map((match) => {
+    const { homeScore, awayScore } = createDeterministicScore(match.id);
+
+    return {
+      matchId: match.id,
+      homeScore,
+      awayScore,
+      source: MOCK_SOURCE_NAME,
+    };
+  });
+};
+
+const getSeasonYear = (tournamentId: TournamentId): string => {
+  if (tournamentId === 'WC26') {
+    return (import.meta.env.VITE_SCORE_FEED_WC26_SEASON as string | undefined)?.trim() || '2026';
+  }
+
+  return (import.meta.env.VITE_SCORE_FEED_EURO28_SEASON as string | undefined)?.trim() || '2028';
+};
+
+const resolveTeamId = (
+  homeOrAwayCode: string | null,
+  homeOrAwayName: string | null,
+  teamByCode: Map<string, string>,
+  teamByName: Map<string, string>,
+): string | null => {
+  if (homeOrAwayCode) {
+    const code = homeOrAwayCode.toUpperCase();
+    if (teamByCode.has(code)) {
+      return teamByCode.get(code) || null;
+    }
+
+    const alias = TEAM_CODE_ALIASES[code];
+    if (alias && teamByCode.has(alias)) {
+      return teamByCode.get(alias) || null;
+    }
+  }
+
+  if (homeOrAwayName) {
+    const normalized = normalizeText(homeOrAwayName);
+    if (teamByName.has(normalized)) {
+      return teamByName.get(normalized) || null;
+    }
+
+    const aliasId = TEAM_NAME_ALIASES[normalized];
+    if (aliasId && teamByCode.has(aliasId)) {
+      return teamByCode.get(aliasId) || null;
+    }
+  }
+
+  return null;
+};
+
+const pickBestMatch = (candidates: Match[], kickoffUtc: string | null): Match | null => {
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  const kickoffMs = parseDateMs(kickoffUtc || undefined);
+  if (kickoffMs === null) {
+    return null;
+  }
+
+  let best: Match | null = null;
+  let smallestDelta = Number.POSITIVE_INFINITY;
+
+  for (const candidate of candidates) {
+    const candidateMs = parseDateMs(candidate.date);
+    if (candidateMs === null) continue;
+
+    const delta = Math.abs(candidateMs - kickoffMs);
+    if (delta < smallestDelta) {
+      best = candidate;
+      smallestDelta = delta;
+    }
+  }
+
+  // Ignore ambiguous matches that are too far from the provider kickoff.
+  if (smallestDelta > 36 * 60 * 60 * 1000) {
+    return null;
+  }
+
+  return best;
+};
+
+const toProviderMatches = (payload: any): ProviderMatch[] => {
+  if (!payload || !Array.isArray(payload.matches)) {
+    return [];
+  }
+
+  return payload.matches.map((match: any) => ({
+    kickoffUtc: typeof match?.utcDate === 'string' ? match.utcDate : null,
+    homeCode: typeof match?.homeTeam?.tla === 'string' ? match.homeTeam.tla : null,
+    awayCode: typeof match?.awayTeam?.tla === 'string' ? match.awayTeam.tla : null,
+    homeName: typeof match?.homeTeam?.name === 'string'
+      ? match.homeTeam.name
+      : typeof match?.homeTeam?.shortName === 'string'
+        ? match.homeTeam.shortName
+        : null,
+    awayName: typeof match?.awayTeam?.name === 'string'
+      ? match.awayTeam.name
+      : typeof match?.awayTeam?.shortName === 'string'
+        ? match.awayTeam.shortName
+        : null,
+    status: typeof match?.status === 'string' ? match.status : null,
+    homeScore: typeof match?.score?.fullTime?.home === 'number' ? match.score.fullTime.home : null,
+    awayScore: typeof match?.score?.fullTime?.away === 'number' ? match.score.fullTime.away : null,
+  }));
+};
+
+const deriveScoreUpdates = (providerMatches: ProviderMatch[], matches: Match[], teams: Team[]): ScoreUpdate[] => {
+  const updates: ScoreUpdate[] = [];
+
+  const pendingMatches = matches.filter(
+    (match) => Boolean(match.homeTeamId && match.awayTeamId) && isUnfinishedMatch(match),
+  );
+
+  const teamByCode = new Map<string, string>();
+  const teamByName = new Map<string, string>();
+
+  for (const team of teams) {
+    teamByCode.set(team.id.toUpperCase(), team.id);
+    teamByName.set(normalizeText(team.name), team.id);
+  }
+
+  const pendingByPair = new Map<string, Match[]>();
+
+  for (const match of pendingMatches) {
+    const key = `${match.homeTeamId}-${match.awayTeamId}`;
+    const existing = pendingByPair.get(key) || [];
+    existing.push(match);
+    pendingByPair.set(key, existing);
+  }
+
+  const consumedMatchIds = new Set<string>();
+
+  for (const providerMatch of providerMatches) {
+    if (!providerMatch.status || !FINISHED_PROVIDER_STATUSES.has(providerMatch.status)) {
+      continue;
+    }
+
+    if (providerMatch.homeScore === null || providerMatch.awayScore === null) {
+      continue;
+    }
+
+    const homeTeamId = resolveTeamId(providerMatch.homeCode, providerMatch.homeName, teamByCode, teamByName);
+    const awayTeamId = resolveTeamId(providerMatch.awayCode, providerMatch.awayName, teamByCode, teamByName);
+
+    if (!homeTeamId || !awayTeamId) {
+      continue;
+    }
+
+    const forwardCandidates = pendingByPair.get(`${homeTeamId}-${awayTeamId}`) || [];
+    const reverseCandidates = pendingByPair.get(`${awayTeamId}-${homeTeamId}`) || [];
+
+    let chosenMatch = pickBestMatch(forwardCandidates.filter(c => !consumedMatchIds.has(c.id)), providerMatch.kickoffUtc);
+    let shouldSwapScores = false;
+
+    if (!chosenMatch) {
+      chosenMatch = pickBestMatch(reverseCandidates.filter(c => !consumedMatchIds.has(c.id)), providerMatch.kickoffUtc);
+      shouldSwapScores = Boolean(chosenMatch);
+    }
+
+    if (!chosenMatch) {
+      continue;
+    }
+
+    consumedMatchIds.add(chosenMatch.id);
+
+    const homeScore = shouldSwapScores ? providerMatch.awayScore : providerMatch.homeScore;
+    const awayScore = shouldSwapScores ? providerMatch.homeScore : providerMatch.awayScore;
+
+    if (homeScore === null || awayScore === null) {
+      continue;
+    }
+
+    updates.push({
+      matchId: chosenMatch.id,
+      homeScore,
+      awayScore,
+      source: LIVE_SOURCE_NAME,
+    });
+  }
+
+  return updates;
+};
+
+const getFootballDataBaseUrl = (): string => {
+  const configured = (import.meta.env.VITE_FOOTBALL_DATA_API_BASE_URL as string | undefined)?.trim();
+  if (configured) {
+    return configured.replace(/\/+$/, '');
+  }
+
+  if (import.meta.env.DEV) {
+    return DEV_PROXY_BASE_URL;
+  }
+
+  return 'https://api.football-data.org/v4';
+};
+
+export const fetchTournamentScoreUpdates = async ({
+  tournamentId,
+  matches,
+  teams,
+}: FetchScoreUpdatesParams): Promise<FetchScoreUpdatesResult> => {
+  const fetchedAt = Date.now();
+  const scoreFeedMode = getScoreFeedMode();
+
+  if (scoreFeedMode === 'mock') {
+    return {
+      status: 'ok',
+      source: MOCK_SOURCE_NAME,
+      fetchedAt,
+      updates: deriveMockScoreUpdates(matches),
+    };
+  }
+
+  const apiToken = (import.meta.env.VITE_FOOTBALL_DATA_API_TOKEN as string | undefined)?.trim();
+
+  if (!apiToken) {
+    return {
+      status: 'disabled',
+      source: LIVE_SOURCE_NAME,
+      fetchedAt,
+      updates: [],
+      reason: 'Automatic score sync is disabled. Set VITE_FOOTBALL_DATA_API_TOKEN in your .env file.',
+    };
+  }
+
+  const competition = getCompetitionCode(tournamentId);
+  const season = getSeasonYear(tournamentId);
+  const baseUrl = getFootballDataBaseUrl();
+  const endpoint = `${baseUrl}/competitions/${encodeURIComponent(competition)}/matches?season=${encodeURIComponent(season)}`;
+
+  const response = await fetch(endpoint, {
+    headers: {
+      'X-Auth-Token': apiToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Score sync request failed (${response.status}).`);
+  }
+
+  const payload = await response.json();
+  const providerMatches = toProviderMatches(payload);
+  const updates = deriveScoreUpdates(providerMatches, matches, teams);
+
+  return {
+    status: 'ok',
+    source: LIVE_SOURCE_NAME,
+    fetchedAt,
+    updates,
+  };
+};
+
+export const applyScoreUpdates = (matches: Match[], updates: ScoreUpdate[]): ApplyScoreUpdatesResult => {
+  if (updates.length === 0) {
+    return { matches, appliedCount: 0 };
+  }
+
+  const updatesByMatchId = new Map<string, ScoreUpdate>();
+  for (const update of updates) {
+    updatesByMatchId.set(update.matchId, update);
+  }
+
+  let appliedCount = 0;
+  let hasAnyChange = false;
+
+  const nextMatches = matches.map((match) => {
+    const update = updatesByMatchId.get(match.id);
+    if (!update) {
+      return match;
+    }
+
+    if (!isUnfinishedMatch(match)) {
+      return match;
+    }
+
+    if (match.homeScore === update.homeScore && match.awayScore === update.awayScore && match.status === 'FINISHED') {
+      return match;
+    }
+
+    hasAnyChange = true;
+    appliedCount += 1;
+
+    return {
+      ...match,
+      homeScore: update.homeScore,
+      awayScore: update.awayScore,
+      status: 'FINISHED' as const,
+    };
+  });
+
+  if (!hasAnyChange) {
+    return { matches, appliedCount: 0 };
+  }
+
+  return {
+    matches: nextMatches,
+    appliedCount,
+  };
+};
+
+export const getNextScoreSyncDelayMs = (matches: Match[], nowMs: number = Date.now()): number => {
+  const pending = matches.filter(
+    (match) => Boolean(match.homeTeamId && match.awayTeamId) && isUnfinishedMatch(match),
+  );
+
+  if (pending.length === 0) {
+    return NO_PENDING_SYNC_DELAY_MS;
+  }
+
+  const pendingKickoffMs = pending
+    .map((match) => parseDateMs(match.date))
+    .filter((value): value is number => value !== null);
+
+  if (pendingKickoffMs.length === 0) {
+    return IDLE_SYNC_DELAY_MS;
+  }
+
+  const hasActiveWindow = pendingKickoffMs.some((kickoffMs) => {
+    const activeFrom = kickoffMs - ACTIVE_WINDOW_BEFORE_KICKOFF_MS;
+    const activeUntil = kickoffMs + ACTIVE_WINDOW_AFTER_KICKOFF_MS;
+    return nowMs >= activeFrom && nowMs <= activeUntil;
+  });
+
+  if (hasActiveWindow) {
+    return ACTIVE_SYNC_DELAY_MS;
+  }
+
+  const hasRecentlyDueMatch = pendingKickoffMs.some((kickoffMs) => {
+    const finishedWindowStart = kickoffMs + ACTIVE_WINDOW_AFTER_KICKOFF_MS;
+    const finishedWindowEnd = kickoffMs + 12 * 60 * 60 * 1000;
+    return nowMs >= finishedWindowStart && nowMs <= finishedWindowEnd;
+  });
+
+  if (hasRecentlyDueMatch) {
+    return RECENTLY_DUE_SYNC_DELAY_MS;
+  }
+
+  const hasUpcomingMatchSoon = pendingKickoffMs.some((kickoffMs) => {
+    return kickoffMs > nowMs && kickoffMs - nowMs <= 6 * 60 * 60 * 1000;
+  });
+
+  if (hasUpcomingMatchSoon) {
+    return UPCOMING_SYNC_DELAY_MS;
+  }
+
+  return IDLE_SYNC_DELAY_MS;
+};

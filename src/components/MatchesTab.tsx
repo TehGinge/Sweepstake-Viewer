@@ -13,7 +13,7 @@ const STAGES: { stage: MatchStage; title: string }[] = [
 ];
 
 export const MatchesTab: React.FC = () => {
-  const { matches, setMatches, updateMatch, teams, tournamentId, players, settings, isReadOnly } = useAppContext();
+  const { matches, setMatches, updateMatch, teams, tournamentId, players, settings, scoreSyncStatus, isReadOnly } = useAppContext();
   const [activeStage, setActiveStage] = useState<MatchStage>(tournamentId === 'WC26' ? 'R32' : 'R16');
 
   const stageMatches = matches.filter(m => m.stage === activeStage);
@@ -38,6 +38,40 @@ export const MatchesTab: React.FC = () => {
       }
       return match;
     }));
+  };
+
+  const formatLastChecked = (timestamp: number | null): string => {
+    if (!timestamp) return 'not checked yet';
+    return new Date(timestamp).toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const getScoreSyncLabel = (): string => {
+    if (isReadOnly) {
+      return 'Auto-sync is handled by the host. Viewer updates arrive in real time.';
+    }
+
+    if (scoreSyncStatus.state === 'syncing') {
+      return 'Auto-sync is checking official scores...';
+    }
+
+    if (scoreSyncStatus.state === 'disabled') {
+      return scoreSyncStatus.lastError || 'Auto-sync is disabled.';
+    }
+
+    if (scoreSyncStatus.state === 'error') {
+      return `Auto-sync error: ${scoreSyncStatus.lastError || 'unknown error'}`;
+    }
+
+    const sourceText = scoreSyncStatus.source ? ` via ${scoreSyncStatus.source}` : '';
+    const appliedText = scoreSyncStatus.lastAppliedCount > 0
+      ? ` Applied ${scoreSyncStatus.lastAppliedCount} update${scoreSyncStatus.lastAppliedCount === 1 ? '' : 's'}.`
+      : '';
+
+    return `Auto-sync checked at ${formatLastChecked(scoreSyncStatus.lastSyncedAt)}${sourceText}.${appliedText}`;
   };
 
   return (
@@ -67,7 +101,10 @@ export const MatchesTab: React.FC = () => {
       <div className="flex-1">
         <div className={`${SURFACES.card} rounded-xl shadow-sm overflow-hidden flex flex-col`}>
           <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center flex-wrap gap-4">
-            <h2 className={`text-xl font-black ${TEXT.primary}`}>{STAGES.find(s => s.stage === activeStage)?.title}</h2>
+            <div>
+              <h2 className={`text-xl font-black ${TEXT.primary}`}>{STAGES.find(s => s.stage === activeStage)?.title}</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{getScoreSyncLabel()}</p>
+            </div>
               {settings.allowSimulate && !isReadOnly && (
               <button
                  onClick={simulateStageMatches}
@@ -203,7 +240,7 @@ export const MatchesTab: React.FC = () => {
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-tight">
               {isReadOnly
                 ? 'This live game link is read-only for viewers. Score updates appear automatically when the host edits matches.'
-                : 'Select the teams playing in each match. Any team that appears in a match automatically scores progression points for their assigned player. To complete a match, simply enter the final score.'}
+                : 'Select the teams playing in each match. Any team that appears in a match automatically scores progression points for their assigned player. Auto-sync now checks official results and fills unfinished matches, while finished matches stay locked.'}
             </p>
         </div>
       </div>

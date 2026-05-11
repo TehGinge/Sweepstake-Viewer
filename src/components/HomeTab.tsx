@@ -225,8 +225,28 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
               </div>
 
               <div className="flex-1 p-3 grid gap-1.5 bg-slate-50/70 dark:bg-slate-900">
-                {[...entry.teams].sort((a, b) => a.fifaRanking - b.fifaRanking).map(team => {
-                   const pts = calculateTeamPoints(team.id, matches, config);
+                {(() => {
+                  const teamsWithPoints = entry.teams.map(team => ({
+                    team,
+                    pts: calculateTeamPoints(team.id, matches, config),
+                  }));
+
+                  const allTeamsSamePoints = teamsWithPoints.length > 0
+                    && teamsWithPoints.every(item => item.pts === teamsWithPoints[0].pts);
+
+                  const sortedPlayerTeams = [...teamsWithPoints].sort((a, b) => {
+                    if (allTeamsSamePoints) {
+                      return a.team.fifaRanking - b.team.fifaRanking;
+                    }
+
+                    if (b.pts !== a.pts) {
+                      return b.pts - a.pts;
+                    }
+
+                    return a.team.fifaRanking - b.team.fifaRanking;
+                  });
+
+                  return sortedPlayerTeams.map(({ team, pts }) => {
                    const playedCount = matches.filter(m => (m.homeTeamId === team.id || m.awayTeamId === team.id) && m.status === 'FINISHED').length;
                    const hasPlayed = playedCount > 0;
                    let cardBorderClass = 'border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600 shadow-sm';
@@ -275,7 +295,8 @@ export const HomeTab: React.FC<{ setActiveTab: (tab: any) => void; onNavigateToG
                        </div>
                      </button>
                    );
-                })}
+                    });
+                  })()}
                 {entry.teams.length === 0 && (
                   <div className="text-xs text-slate-600 dark:text-slate-500 italic text-center py-3">No teams.</div>
                 )}

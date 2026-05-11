@@ -44,6 +44,16 @@ export interface AppSettings {
   customTitle: string;
 }
 
+export type ScoreSyncState = 'idle' | 'syncing' | 'disabled' | 'error';
+
+export interface ScoreSyncStatus {
+  state: ScoreSyncState;
+  source: string | null;
+  lastSyncedAt: number | null;
+  lastAppliedCount: number;
+  lastError: string | null;
+}
+
 export interface PersistedAppState {
   tournamentId: TournamentId;
   players: Player[];
