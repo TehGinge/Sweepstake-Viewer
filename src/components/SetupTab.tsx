@@ -5,6 +5,9 @@ import { CONTROLS, SURFACES, TEXT, getPlayerTheme } from '../utils/theme';
 import { getUserCloudGames, CloudGameRecord } from '../firebase/gameStore';
 import { ensureAnonymousAuth } from '../firebase/client';
 
+const BULK_PLAYERS_INPUT_KEY = 'worldCupBulkPlayersInput';
+const BULK_PLAYERS_OPEN_KEY = 'worldCupBulkPlayersOpen';
+
 export const SetupTab: React.FC = () => {
   const {
     players,
@@ -33,10 +36,37 @@ export const SetupTab: React.FC = () => {
   const [userGames, setUserGames] = useState<{ id: string; meta: CloudGameRecord['meta'] }[]>([]);
   const [saveSlotName, setSaveSlotName] = useState("");
   const [liveMessage, setLiveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [bulkPlayersInput, setBulkPlayersInput] = useState(() => {
+    try {
+      return localStorage.getItem(BULK_PLAYERS_INPUT_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [bulkPlayersError, setBulkPlayersError] = useState<string | null>(null);
+  const [isBulkPlayersOpen, setIsBulkPlayersOpen] = useState(() => {
+    try {
+      return localStorage.getItem(BULK_PLAYERS_OPEN_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
-    setSavedStates(JSON.parse(localStorage.getItem('worldCupSaves') || '{}'));
+    try {
+      setSavedStates(JSON.parse(localStorage.getItem('worldCupSaves') || '{}'));
+    } catch {
+      setSavedStates({});
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(BULK_PLAYERS_INPUT_KEY, bulkPlayersInput);
+  }, [bulkPlayersInput]);
+
+  useEffect(() => {
+    localStorage.setItem(BULK_PLAYERS_OPEN_KEY, String(isBulkPlayersOpen));
+  }, [isBulkPlayersOpen]);
 
   useEffect(() => {
     fetchUserGames();
@@ -45,6 +75,10 @@ export const SetupTab: React.FC = () => {
   const fetchUserGames = async () => {
     try {
       const auth = await ensureAnonymousAuth();
+      if (!auth) {
+        setUserGames([]);
+        return;
+      }
       const games = await getUserCloudGames(auth.uid);
       setUserGames(games);
     } catch (err) {
@@ -54,15 +88,34 @@ export const SetupTab: React.FC = () => {
 
   const saveState = () => {
     const name = saveSlotName.trim() || `Save ${new Date().toLocaleString()}`;
-    const newSaves = { ...savedStates, [name]: players };
+    const newSaves = {
+      ...savedStates,
+      [name]: {
+        players,
+        bulkPlayersInput,
+      },
+    };
     setSavedStates(newSaves);
     localStorage.setItem('worldCupSaves', JSON.stringify(newSaves));
     setSaveSlotName("");
   };
 
   const loadState = (name: string) => {
-    if (savedStates[name]) {
-      setPlayers(savedStates[name]);
+    const savedState = savedStates[name];
+    if (!savedState) return;
+
+    // Backward compatibility: older saves were raw Player[] arrays.
+    if (Array.isArray(savedState)) {
+      setPlayers(savedState);
+      return;
+    }
+
+    if (Array.isArray(savedState.players)) {
+      setPlayers(savedState.players);
+    }
+
+    if (typeof savedState.bulkPlayersInput === 'string') {
+      setBulkPlayersInput(savedState.bulkPlayersInput);
     }
   };
 
@@ -84,6 +137,40 @@ export const SetupTab: React.FC = () => {
 
   const updatePlayerName = (id: string, name: string) => {
     setPlayers(players.map(p => p.id === id ? { ...p, name } : p));
+  };
+
+  const parseBulkPlayerNames = (rawInput: string): string[] => {
+    return rawInput
+      .split(/\r?\n|,|;|\t/)
+      .map(name => name.trim())
+      .filter(Boolean);
+  };
+
+  const applyBulkPlayers = () => {
+    const parsedNames = parseBulkPlayerNames(bulkPlayersInput);
+
+    if (parsedNames.length === 0) {
+      setBulkPlayersError('Enter at least one player name.');
+      return;
+    }
+
+    const hasExistingAssignments = players.some(player => player.teamIds.length > 0);
+    if (hasExistingAssignments) {
+      const shouldReplace = window.confirm('Replace all players? This will clear current team assignments.');
+      if (!shouldReplace) {
+        return;
+      }
+    }
+
+    const nextPlayers = parsedNames.map((name, index) => ({
+      id: `P${Date.now()}-${index}`,
+      name,
+      teamIds: [],
+    }));
+
+    setPlayers(nextPlayers);
+    setBulkPlayersError(null);
+    setBulkPlayersInput(parsedNames.join('\n'));
   };
   
   const handleReset = () => {
@@ -156,6 +243,7 @@ export const SetupTab: React.FC = () => {
   const pot1PlayersText = players.flatMap(p => Array(pot1Entries).fill(p.name)).join('\n');
   const pot2PlayersText = players.flatMap(p => Array(pot2Entries).fill(p.name)).join('\n');
   const pot3PlayersText = players.flatMap(p => Array(pot3Entries).fill(p.name)).join('\n');
+  const parsedBulkPlayerCount = parseBulkPlayerNames(bulkPlayersInput).length;
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -249,6 +337,54 @@ export const SetupTab: React.FC = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/50">
+            <button
+              type="button"
+              onClick={() => setIsBulkPlayersOpen(prev => !prev)}
+              aria-expanded={isBulkPlayersOpen}
+              className="w-full flex items-center justify-between gap-3"
+            >
+              <span className={`text-sm font-black ${TEXT.primary}`}>Bulk Enter Players</span>
+              <span className={`text-xs font-bold px-2 py-1 rounded border border-slate-300 dark:border-slate-600 ${TEXT.muted}`}>
+                {isBulkPlayersOpen ? 'Hide' : 'Show'}
+              </span>
+            </button>
+
+            {isBulkPlayersOpen && (
+              <>
+                <p className={`text-xs mt-3 mb-3 ${TEXT.muted}`}>
+                  Paste player names from free text (one per line, or separated by commas/semicolons). Applying this replaces the full player list.
+                </p>
+                <textarea
+                  value={bulkPlayersInput}
+                  onChange={(e) => {
+                    setBulkPlayersInput(e.target.value);
+                    if (bulkPlayersError) {
+                      setBulkPlayersError(null);
+                    }
+                  }}
+                  placeholder={'Alice\nBob\nCharlie\n...'}
+                  className={`w-full rounded-lg px-3 py-2 text-sm font-medium min-h-28 ${CONTROLS.input}`}
+                />
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className={`text-xs font-semibold ${TEXT.muted}`}>
+                    {parsedBulkPlayerCount} player{parsedBulkPlayerCount === 1 ? '' : 's'} detected
+                  </span>
+                  <button
+                    onClick={applyBulkPlayers}
+                    disabled={parsedBulkPlayerCount === 0}
+                    className="px-4 py-2 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 rounded font-bold text-sm hover:bg-slate-700 dark:hover:bg-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Replace Player List
+                  </button>
+                </div>
+                {bulkPlayersError && (
+                  <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">{bulkPlayersError}</p>
+                )}
+              </>
+            )}
+          </div>
+
           {players.map((player, index) => {
             const theme = getPlayerTheme(index);
             return (
@@ -346,7 +482,11 @@ export const SetupTab: React.FC = () => {
         {Object.keys(savedStates).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(savedStates).map(([name, data]) => {
-              const savedPlayers = data as any[];
+              const savedPlayers = Array.isArray(data)
+                ? data
+                : Array.isArray((data as any).players)
+                  ? (data as any).players
+                  : [];
               return (
               <div key={name} className="bg-white/80 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-lg p-4 flex flex-col shadow-sm">
                 <div className="font-bold text-slate-900 dark:text-slate-200 mb-1 truncate" title={name}>{name}</div>
