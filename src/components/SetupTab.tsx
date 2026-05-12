@@ -379,7 +379,7 @@ export const SetupTab: React.FC = () => {
       <div className="bg-gradient-to-br from-white to-sky-50/50 dark:from-slate-900 dark:to-slate-950 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Link2 size={20} className="text-sky-600 dark:text-sky-400" />
-          <h3 className={`text-lg font-black ${TEXT.primary}`}>Live Game (Firebase)</h3>
+          <h3 className={`text-lg font-black ${TEXT.primary}`}>Live Game</h3>
         </div>
         <p className={`text-sm ${TEXT.muted} mb-5`}>
           Start a live game URL to sync scores and standings in real time. Viewers can watch updates immediately while only the host can edit.
